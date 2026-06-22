@@ -125,7 +125,6 @@ open-client/
 ├── models/
 │   └── cliente.go          # Struct Cliente
 ├── data/
-│   ├── clientes.json       # Dataset fuente (~6k registros)
 │   └── database.sqlite     # Base de datos pre-cargada
 ├── Dockerfile              # Multi-stage, non-root, HEALTHCHECK
 ├── .env.example
