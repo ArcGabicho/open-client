@@ -17,7 +17,7 @@ RUN apk --no-cache add ca-certificates tzdata && \
 WORKDIR /app
 
 COPY --from=builder /app/server .
-COPY --from=builder /app/data ./data
+COPY --from=builder /app/data/database.sqlite ./data/database.sqlite
 
 USER appuser
 EXPOSE 3000

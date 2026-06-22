@@ -35,6 +35,3 @@ Thumbs.db
 # SQLite runtime files (regenerados al abrir la DB)
 *.sqlite-wal
 *.sqlite-shm
-
-# Docker
-.dockerignore

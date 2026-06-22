@@ -1,0 +1,27 @@
+# Git
+.git/
+.gitignore
+
+# Env
+.env
+.env.example
+
+# Docker
+Dockerfile
+.dockerignore
+
+# IDE
+.idea/
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docs
+README.md
+LICENSE.md
+
+# SQLite runtime files (se regeneran en el contenedor)
+*.sqlite-wal
+*.sqlite-shm
