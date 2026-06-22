@@ -34,7 +34,7 @@
 ## 🚀 Inicio rápido
 
 ```bash
-git clone https://github.com/tu-usuario/open-client.git
+git clone https://github.com/ArcGabicho/open-client.git
 cd open-client
 cp .env.example .env
 go run main.go
