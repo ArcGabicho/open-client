@@ -1,37 +1,323 @@
-# Binaries
-*.exe
-*.exe~
+# ===========================
+# DEPENDENCIAS Y PAQUETES
+# ===========================
+packages/
+*.nupkg
+*.snupkg
+*.nuget.props
+*.nuget.targets
+nuget/
+artifacts/
+project.lock.json
+project.assets.json
+*.lock.json
+
+# ===========================
+# ARCHIVOS DE COMPILACIÓN
+# ===========================
+bin/
+obj/
 *.dll
-*.so
-*.dylib
-*.out
-*.test
-*.test.exe
+*.exe
+*.pdb
+*.cache
+*.tmp
+*.temp
+*.log
+*.tlog
 
-# Go workspace
-go.work
-go.work.sum
-
-# Dependency directories
-vendor/
-
-# Build output
-/tmp/
-
-# IDE
-.idea/
+# ===========================
+# PROYECTOS ASP.NET CORE
+# ===========================
+# Archivos de usuario
+*.user
+*.userprefs
+*.suo
+*.sln.docstates
+*.sln.ide
+.vs/
 .vscode/
+
+# Archivos de configuración de usuario
+appsettings.Production.json
+appsettings.*.json
+!appsettings.Development.json
+!appsettings.json
+secrets.json
+*.secrets.json
+*.local.json
+
+# ===========================
+# ENTITY FRAMEWORK CORE
+# ===========================
+# Migraciones (opcional - descomenta si quieres ignorarlas)
+# Migrations/
+# *.Migration.cs
+# *.Designer.cs
+
+# Archivos de base de datos locales
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.mdb
+*.ldb
+*.mdf
+*.ldf
+*.sdf
+*.sqlite-journal
+*.db-journal
+
+# ===========================
+# SQL SERVER
+# ===========================
+# Archivos de datos SQL Server
+*.mdf
+*.ldf
+*.ndf
+*.bak
+*.trn
+*.log
+*.sqllog
+
+# Archivos de reportes SQL Server
+*.rdl.data
+*.rdl
+*.rds
+
+# ===========================
+# VARIABLES DE ENTORNO
+# ===========================
+.env
+.env.*
+!.env.example
+!.env.local.example
+.env.production
+.env.development
+.env.test
+.env.staging
+.env.local
+.env.user
+
+# ===========================
+# IDES Y EDITORES
+# ===========================
+# Visual Studio
+.vs/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+*.suo
+*.user
+*.sln.docstates
+.vsconfig
+.vspscc
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+*.code-snippets
+*.vscode
+
+# JetBrains Rider / IntelliJ
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
 *.swp
 *.swo
 *~
 
-# OS
+# ===========================
+# LOGS
+# ===========================
+logs/
+*.log
+nlog-*.log
+serilog-*.log
+log-*.txt
+LogFiles/
+*.log.txt
+*.log.json
+
+# ===========================
+# ARCHIVOS DE SISTEMA Y TEMPORALES
+# ===========================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+*.tmp
+*.temp
+*.pid
+*.seed
+*.pid.lock
+*.cache
+.cache/
 
-# Env
-.env
+# ===========================
+# DOCKER
+# ===========================
+docker-compose.override.yml
+*.dockerignore
+!Dockerfile
+!docker-compose.yml
+.data/
+.pgdata/
+mssql-data/
+mysql-data/
+*.container
 
-# SQLite runtime files (regenerados al abrir la DB)
-*.sqlite-wal
-*.sqlite-shm
+# ===========================
+# COBERTURA DE CÓDIGO Y PRUEBAS
+# ===========================
+coverage/
+TestResults/
+*.coverage
+*.coveragexml
+*.trx
+*.html
+*.xml
+*.jsons
+*.opencover.xml
+*.cobertura.xml
+*.coverlet.*
+
+# ===========================
+# PUBLISH
+# ===========================
+publish/
+Release/
+Debug/
+*.deploy
+*.zip
+*.tar.gz
+*.tgz
+*.gz
+
+# ===========================
+# SECRETOS Y CERTIFICADOS
+# ===========================
+*.pfx
+*.p12
+*.pem
+*.key
+*.crt
+*.cer
+*.snk
+*.pvk
+*.p7b
+*.p7c
+*.jks
+*.keystore
+
+# ===========================
+# ARCHIVOS DE CONSTRUCCIÓN
+# ===========================
+dist/
+build/
+wwwroot/lib/
+wwwroot/dist/
+*.bundle.js
+*.bundle.css
+*.min.js
+*.min.css
+
+# ===========================
+# DEPENDENCIAS DE NODE (si usas frontend)
+# ===========================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# ===========================
+# OTROS
+# ===========================
+# Archivos de Azure
+*.pubxml
+*.pubxml.user
+*.azure
+*.azureuser
+
+# Archivos de AWS
+*.aws
+*.awspack
+
+# Archivos de Kubernetes
+*.kubeconfig
+*.context
+
+# Archivos de Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# Archivos de configuración de CI/CD
+.gitlab-ci.yml
+.travis.yml
+Jenkinsfile
+.azure-pipelines.yml
+.github/workflows/
+
+# ===========================
+# ARCHIVOS DE DEPURACIÓN
+# ===========================
+*.dump
+*.dmp
+*.crash
+*.error
+*.diagsession
+*.stacks
+*.wprp
+
+# ===========================
+# ARCHIVOS DE BASE DE DATOS ESPECÍFICOS
+# ===========================
+# SQLite
+*.sqlite
+*.db
+*.db-shm
+*.db-wal
+*.sqlite3
+
+# SQL Server LocalDB
+*.mdf
+*.ldf
+
+# PostgreSQL
+*.pgdata
+*.postgres
+
+# ===========================
+# ARCHIVOS DE PROYECTOS DE TERCEROS
+# ===========================
+# Entity Framework Power Tools
+*_EFCorePowerTools.txt
+*_EFCorePowerTools.sql
+
+# Swagger
+swagger.json
+swagger.yaml
+
+# OpenAPI
+openapi.json
+openapi.yaml
