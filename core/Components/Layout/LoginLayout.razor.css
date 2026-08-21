@@ -1,89 +1,12 @@
-.login-split-container {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    min-height: 100vh;
-    background-color: #ffffff;
-    padding: 1.5rem;
-    gap: 1.5rem;
-}
-
 .form-panel {
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
+    height: 100dvh;
+    width: 100%;
 }
 
 .form-wrapper {
     width: 100%;
-    max-width: 420px;
-}
-
-/* Cover Side */
-.cover-panel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.cover-card {
-    height: calc(100% - 60px);
-    border-radius: 1.5rem;
-    background: linear-gradient(135deg, #635bff 0%, #3b33c5 100%), 
-                url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80');
-    background-size: cover;
-    background-position: center;
-    padding: 2.5rem;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    color: #ffffff;
-    box-shadow: 0 10px 30px rgba(99, 91, 255, 0.2);
-}
-
-.brand-title {
-    font-weight: 800;
-    font-size: 1.25rem;
-    letter-spacing: 0.05em;
-}
-
-.testimonial-box {
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 1.25rem;
-    padding: 1.75rem;
-    max-width: 90%;
-}
-
-.testimonial-text {
-    font-size: 1.2rem;
-    line-height: 1.4;
-    font-weight: 500;
-    margin: 0 0 1.5rem 0;
-}
-
-.testimonial-author {
-    display: flex;
-    flex-direction: column;
-}
-
-.author-name {
-    font-weight: 600;
-    font-size: 0.95rem;
-}
-
-.author-role {
-    font-size: 0.8rem;
-    opacity: 0.8;
-}
-
-@media (max-width: 900px) {
-    .login-split-container {
-        grid-template-columns: 1fr;
-    }
-    .cover-panel {
-        display: none;
-    }
+    max-width: 400px;
 }

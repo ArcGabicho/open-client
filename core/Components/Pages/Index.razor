@@ -1,7 +1,6 @@
 ﻿@page "/"
 @layout MainLayout
 
-<!-- Hero Section -->
 <section class="hero-section">
     <div class="hero-left">
         <span class="badge">Licencia MIT</span>
@@ -27,24 +26,21 @@
     </div>
 </section>
 
-<!-- Bento Grid Cleaned -->
 <section class="bento-grid">
-    <!-- Card 1: Main Showcase (Ocupa 2 filas a la izquierda) -->
     <div class="card card-main">
         <div class="image-wrapper">
             <img src="https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=1000&q=80" alt="AI Speaker" />
         </div>
-        <div class="card-footer-overlay">
-            <h3>Ver mas Proyectos</h3>
-            <button class="btn-icon-black">
+        <a href="/log-in" class="card-footer-overlay">
+            <h3>Ingresar al sistema</h3>
+            <div class="btn-icon-black">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M7 17L17 7M17 7H7M17 7V17" />
                 </svg>
-            </button>
-        </div>
+            </div>
+        </a>
     </div>
 
-    <!-- Card 2: 24/7 Security -->
     <div class="card card-dark">
         <div class="card-header">
             <h2>24/7<br />Security</h2>
@@ -57,7 +53,6 @@
         <p>AI-Hive provides proactive security monitoring and alerts, ensuring peace of mind.</p>
     </div>
 
-    <!-- Card 3: Dyson Purifier Hot -->
     <div class="card card-device">
         <div class="device-info">
             <h4>Dyson Purifier Hot</h4>
@@ -72,7 +67,6 @@
         </div>
     </div>
 
-    <!-- Card 4: Power Usage Today -->
     <div class="card card-purple">
         <div class="gauge-container">
             <div class="gauge-arc"></div>
@@ -83,7 +77,6 @@
         </div>
     </div>
 
-    <!-- Card 5: Vacuum Cleaner -->
     <div class="card card-sage">
         <div class="device-info">
             <h4>Vacuum<br />cleaner</h4>
