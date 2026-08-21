@@ -17,6 +17,23 @@
 .history/
 .vs/
 
+## --- Rider IDE ---
+.idea/
+*.sln.iml
+*.user
+*.userosscache
+*.suo
+*.rsuser
+_ReSharper*/
+*.[Rr]e[Ss]harper*
+*.DotSettings.user
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+*.trx
+*.log
+
 ## --- Archivos temporales y de compilación ---
 [Dd]ebug/
 [Rr]elease/
