@@ -1,0 +1,99 @@
+﻿@page "/"
+@layout MainLayout
+
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-left">
+        <span class="badge">Licencia MIT</span>
+        <h1 class="hero-title">
+            Potencia tu negocio con una base de clientes.
+        </h1>
+    </div>
+    <div class="hero-right">
+        <p class="hero-description">
+            Open Client es un proyecto que te brinda un servicio web, panel administrativo y consulta comercial de
+            clientes. Podrás desplegar tu propio sistema de datos comerciales en minutos y teniendo el control total de
+            los datos con Blazor Web App, Docker y Azure.
+        </p>
+        <div class="hero-actions">
+            <button class="btn-primary">Portfolio</button>
+            <button class="btn-icon-purple">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+            </button>
+            <a href="#" class="link-secondary">Leer más</a>
+        </div>
+    </div>
+</section>
+
+<!-- Bento Grid Cleaned -->
+<section class="bento-grid">
+    <!-- Card 1: Main Showcase (Ocupa 2 filas a la izquierda) -->
+    <div class="card card-main">
+        <div class="image-wrapper">
+            <img src="https://images.unsplash.com/photo-1543512214-318c7553f230?auto=format&fit=crop&w=1000&q=80" alt="AI Speaker" />
+        </div>
+        <div class="card-footer-overlay">
+            <h3>Ver mas Proyectos</h3>
+            <button class="btn-icon-black">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- Card 2: 24/7 Security -->
+    <div class="card card-dark">
+        <div class="card-header">
+            <h2>24/7<br />Security</h2>
+            <button class="btn-icon-purple-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M7 17L17 7M17 7H7M17 7V17" />
+                </svg>
+            </button>
+        </div>
+        <p>AI-Hive provides proactive security monitoring and alerts, ensuring peace of mind.</p>
+    </div>
+
+    <!-- Card 3: Dyson Purifier Hot -->
+    <div class="card card-device">
+        <div class="device-info">
+            <h4>Dyson Purifier Hot</h4>
+            <span class="subtext">Auto mode</span>
+            <label class="toggle-switch">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="device-image">
+            <img src="https://images.unsplash.com/photo-1585338107529-13afc5f02586?auto=format&fit=crop&w=400&q=80" alt="Purifier" />
+        </div>
+    </div>
+
+    <!-- Card 4: Power Usage Today -->
+    <div class="card card-purple">
+        <div class="gauge-container">
+            <div class="gauge-arc"></div>
+        </div>
+        <div class="gauge-info">
+            <span class="value">38.7 kWh</span>
+            <span class="label">Power usage today</span>
+        </div>
+    </div>
+
+    <!-- Card 5: Vacuum Cleaner -->
+    <div class="card card-sage">
+        <div class="device-info">
+            <h4>Vacuum<br />cleaner</h4>
+            <label class="toggle-switch dark">
+                <input type="checkbox" checked />
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="device-image-circle">
+            <img src="https://images.unsplash.com/photo-1518640467707-6811f4a6ab73?auto=format&fit=crop&w=300&q=80" alt="Vacuum" />
+        </div>
+    </div>
+</section>

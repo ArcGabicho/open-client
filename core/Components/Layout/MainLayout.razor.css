@@ -1,0 +1,56 @@
+/* Navbar */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 3.5rem;
+}
+
+.logo {
+    font-weight: 700;
+    font-size: 1.25rem;
+}
+
+.nav-links {
+    display: flex;
+    gap: 2rem;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: #4b5563;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a.active, .nav-links a:hover {
+    color: #111827;
+    font-weight: 700;
+}
+
+.btn-get-started {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+    color: #111827;
+    background: transparent;
+    border: 1px solid #d1d5db;
+    padding: 0.6rem 1.4rem;
+    border-radius: 9999px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-get-started:hover {
+    background-color: #ffffff;
+    border-color: #111827;
+}
+
+.github-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: currentColor;
+}

@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/core/">
+    <Project Path="core/openclient.csproj" />
+  </Folder>
+</Solution>

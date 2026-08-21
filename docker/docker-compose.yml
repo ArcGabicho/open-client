@@ -1,16 +1,19 @@
 services:
-  open-client-database:
+  sqlserver:
     image: mcr.microsoft.com/mssql/server:2022-latest
-    container_name: open_client_database
-    user: root
+    container_name: openclient-database
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=ArcGabicho05$
+      - MSSQL_SA_PASSWORD=${MSSQL_PASSWORD}
     ports:
       - "1433:1433"
     volumes:
-      - open_client_data:/var/opt/mssql/data
+      - openclient_data:/var/opt/mssql
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P '${MSSQL_PASSWORD}' -C -Q 'SELECT 1' || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
-  open_client_data:
-    driver: local
+  openclient_data:

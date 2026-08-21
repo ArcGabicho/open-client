@@ -1,0 +1,43 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <base href="/" />
+
+        <!-- SEO Básico -->
+        <meta name="description" content="Servicio web, panel administrativo y consulta comercial de clientes. Despliega tu propio sistema de datos comerciales en tu propia infraesttructura" />
+        <meta name="keywords" content="Blazor, .NET 10, Docker, Azure, datos comerciales, panel administrativo, CRM, Blazor Web App" />
+        <meta name="author" content="Gabriel Polack" />
+        <meta name="robots" content="index, follow" />
+
+        <!-- Open Graph / Facebook / LinkedIn / WhatsApp -->
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Open Client | Panel Comercial y Sistema de Datos" />
+        <meta property="og:description" content="Servicio web, panel administrativo y consulta comercial de clientes. Despliega tu propio sistema en minutos con Blazor Web App, .NET 10, Docker y Azure." />
+        <meta property="og:url" content="" />
+        <meta property="og:image" content="" />
+        <meta property="og:image:alt" content="Vista previa del panel de control de open-client" />
+        <meta property="og:site_name" content="open-client" />
+        <meta property="og:locale" content="es_PE" />
+
+        <!-- Twitter Cards -->
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="open-client - Panel Comercial y Sistema de Datos" />
+        <meta name="twitter:description" content="Servicio web, panel administrativo y consulta comercial de clientes. Despliega tu propio sistema en minutos con Blazor Web App, .NET 10, Docker y Azure." />
+        <meta name="twitter:image" content="https://tu-dominio.com/og-image.png" />
+
+        <!-- Título y Metadatos Dinámicos de Blazor -->
+        <HeadOutlet />
+        <PageTitle>Open Client | Panel Comercial y Sistema de Datos</PageTitle>
+
+        <!-- Recurso CSS Global y Favicon -->
+        <link rel="stylesheet" href="openclient.styles.css">
+        <link rel="icon" type="image/png" href="favicon.png" />
+    </head>
+    <body class="landing-container">
+        <Routes @rendermode="InteractiveServer" />
+        <ReconnectModal />
+        <script src="@Assets["_framework/blazor.web.js"]"></script>
+    </body>
+</html>

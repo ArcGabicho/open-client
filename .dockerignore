@@ -1,0 +1,22 @@
+# Ignorar dependencias y binarios de compilación
+**/bin/
+**/obj/
+**/out/
+
+# Ignorar control de versiones y documentación
+.git/
+.gitignore
+.vscode/
+.idea/
+docs/
+README.md
+LICENSE.md
+
+# Ignorar base de datos y logs locales
+**/*.db
+**/*.db-shm
+**/*.db-wal
+**/*.log
+
+# Ignorar scripts locales
+scripts/
