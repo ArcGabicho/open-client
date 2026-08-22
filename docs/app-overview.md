@@ -33,8 +33,12 @@ open-client/
 │   ├── openclient.csproj       # Proyecto .NET 10
 │   └── Program.cs              # Entrypoint de ASP.NET Core y Registro de Inyeccion de Dependencias
 ├── docker/
-│   ├── docker-compose.yml      # Infraestructura (SQL Server 2022)
-│   └── Dockerfile              # Multi-stage Dockerfile (Solo Produccion)
+│   ├── docker-compose.yml      # Infraestructura completa (SQL Server + inicializacion + app)
+│   ├── Dockerfile              # Multi-stage Dockerfile de la app (solo produccion)
+│   └── database/
+│       ├── Dockerfile          # Contenedor one-shot de inicializacion
+│       ├── init.sh             # Espera a SQL Server e inyecta credenciales
+│       └── init.sql            # DDL idempotente (OpenClientDb, openclient_user, rol runtime)
 ├── docs/                       # Guias de arquitectura y despliegue
 ├── scripts/
 │   ├── clear.sh                # Limpia artefactos y contenedores
@@ -43,8 +47,9 @@ open-client/
 │   ├── run.sh                  # Inicia la BD y la app en el host
 │   └── setup.sh                # Prepara dependencias y variables
 ├── .dockerignore
+├── .env.example                # Plantilla de variables de entorno
 ├── .gitignore
-├── OpenClient.sln              # Solucion .NET
+├── OpenClient.slnx             # Solucion .NET
 ├── LICENSE.md
 └── README.md
 ```
@@ -78,15 +83,21 @@ Puedes conectarte al contenedor de la base de datos usando Azure Data Studio, DB
 | Servidor | localhost,1433 |
 | Base de datos | OpenClientDb |
 | Autenticacion | SQL Server Authentication |
-| Usuario | sa |
-| Contrasena | TuPasswordSeguro123! |
+| Usuario (app) | openclient_user |
+| Contrasena (app) | Valor de `MSSQL_APP_PASSWORD` en `.env` |
+| Usuario (admin) | sa |
+| Contrasena (admin) | Valor de `MSSQL_PASSWORD` en `.env` |
 | Trust Server Certificate | True |
 
+El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `openclient_runtime` se crean automaticamente al arrancar el servicio `db-init` del Docker Compose.
 
 ## Variables de Entorno
 
 | Variable | Descripcion | Valor por defecto / Ejemplo |
 |----------|-------------|------------------------------|
 | ASPNETCORE_ENVIRONMENT | Entorno de ejecucion (Development / Production) | Development |
-| ConnectionStrings__DefaultConnection | Cadena de conexion hacia el servidor SQL Server | Server=localhost,1433;Database=OpenClientDb;User Id=sa;Password=TuPasswordSeguro123!;TrustServerCertificate=True; |
-| MSSQL_SA_PASSWORD | Contrasena del usuario administrador sa | TuPasswordSeguro123! |
+| ConnectionStrings__DefaultConnection | Cadena de conexion hacia el servidor SQL Server | Server=sqlserver,1433;Database=OpenClientDb;User Id=openclient_user;Password=...;TrustServerCertificate=True; |
+| MSSQL_PASSWORD | Contrasena del usuario administrador sa | Definida en `.env` |
+| MSSQL_APP_PASSWORD | Contrasena del login de aplicacion openclient_user | Definida en `.env` |
+
+Consulta la plantilla completa en `.env.example`.

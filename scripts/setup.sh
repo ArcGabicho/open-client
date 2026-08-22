@@ -69,11 +69,13 @@ fi
 if [ ! -f .env ]; then
     echo -e "${YELLOW}[+] Generando credenciales seguras para Producción...${NC}"
     PROD_PASS="ProdPass_$(openssl rand -hex 12)!"
-    
+    PROD_APP_PASS="AppPass_$(openssl rand -hex 12)!"
+
     cat <<EOF > .env
 MSSQL_PASSWORD=${PROD_PASS}
+MSSQL_APP_PASSWORD=${PROD_APP_PASS}
 EOF
-    echo -e "${GREEN}[✓] Contraseña de producción generada en .env de forma segura.${NC}"
+    echo -e "${GREEN}[✓] Contraseñas de producción (SA y usuario de app) generadas en .env de forma segura.${NC}"
 fi
 
 chmod +x scripts/*.sh

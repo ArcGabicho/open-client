@@ -10,7 +10,7 @@ Todos los scripts definen una variable base estandar para Docker Compose:
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 ```
 
-Esto garantiza que Docker Compose lea el archivo `.env` desde la raiz del proyecto y no desde el subdirectorio `docker/` (donde esta el `docker-compose.yml`). Sin esta bandera, `MSSQL_PASSWORD` no se detectaria y el contenedor de SQL Server fallaria al iniciar.
+Esto garantiza que Docker Compose lea el archivo `.env` desde la raiz del proyecto y no desde el subdirectorio `docker/` (donde esta el `docker-compose.yml`). Sin esta bandera, `MSSQL_PASSWORD` y `MSSQL_APP_PASSWORD` no se detectarian y los contenedores fallarian al iniciar.
 
 ---
 
@@ -23,8 +23,8 @@ Script de instalacion completo que configura el proyecto desde cero. Disenado pa
 1. Detecta la distribucion Linux (Ubuntu/Debian, Arch/CachyOS, Fedora/RHEL/CentOS) e instala `git`, `curl`, `docker` y `docker-compose`.
 2. Annade el usuario al grupo `docker` si no esta en el.
 3. Clona o actualiza el repositorio en `$HOME/open-client` (rama `master`).
-4. Genera un archivo `.env` con una contrasena aleatoria segura para SQL Server si no existe.
-5. Ejecuta `deploy.sh` para levantar el stack con Docker Compose.
+4. Genera un archivo `.env` con dos contrasenas aleatorias seguras si no existe: `MSSQL_PASSWORD` (usuario SA) y `MSSQL_APP_PASSWORD` (login de aplicacion).
+5. Ejecuta `deploy.sh` para levantar el stack completo con Docker Compose.
 
 ### Uso
 
@@ -41,20 +41,20 @@ chmod +x scripts/setup.sh
 
 - Requiere permisos `sudo` para instalar paquetes.
 - Si el directorio `$HOME/open-client` ya existe, ejecuta `git pull` en vez de clonar de nuevo.
-- La contrasena generada se guarda en `.env` y **debe respaldarse**.
+- Las contrasenas generadas se guardan en `.env` y **deben respaldarse**.
 
 ---
 
 ## 2. `scripts/dev.sh` — Configuracion del entorno de desarrollo
 
-Prepara todo lo necesario para trabajar en modo desarrollo.
+Prepara toda la infraestructura necesaria para trabajar en modo desarrollo.
 
 ### Que hace
 
 1. Verifica que Docker y Docker Compose esten instalados.
-2. Crea el archivo `.env` desde `.env.example` (con contrasena aleatoria) si no existe, o crea uno basico.
+2. Crea el archivo `.env` desde `.env.example` (con claves aleatorias) si no existe, o agrega `MSSQL_APP_PASSWORD` si falta en un `.env` previo.
 3. Restaura paquetes .NET (`dotnet restore`) si `dotnet` esta disponible.
-4. Levanta el contenedor `sqlserver` con Docker Compose usando `--env-file .env`.
+4. Levanta `sqlserver` y ejecuta `db-init` en primer plano, que crea `OpenClientDb`, el login/usuario `openclient_user` y el rol `openclient_runtime`.
 
 ### Uso
 
@@ -65,21 +65,21 @@ chmod +x scripts/dev.sh
 
 ### Resultado
 
-| Servicio       | URL / Puerto       |
-|----------------|--------------------|
-| App Blazor Dev | http://localhost:5000 |
-| SQL Server     | localhost:1433     |
+| Servicio       | Valor                 |
+|----------------|-----------------------|
+| Base de datos  | `OpenClientDb @ localhost:1433` |
+| Usuario app    | `openclient_user`     |
 
 ### Notas
 
-- La app se ejecuta en el host con `dotnet run`.
-- Los logs se pueden ver con `./scripts/run.sh --logs`.
+- La app se ejecuta en el host con `./scripts/run.sh` (o `dotnet watch run`).
+- Los logs de SQL Server se pueden ver con `./scripts/run.sh --logs`.
 
 ---
 
 ## 3. `scripts/run.sh` — Control del entorno
 
-Script para gestionar el ciclo de vida del entorno de desarrollo.
+Script para gestionar el ciclo de vida del entorno.
 
 ### Uso
 
@@ -89,18 +89,22 @@ Script para gestionar el ciclo de vida del entorno de desarrollo.
 
 ### Opciones
 
-| Opcion    | Descripcion                                                                              | URL / Puerto         |
-|-----------|------------------------------------------------------------------------------------------|----------------------|
-| (ninguna) | Levanta la BD en Docker y la app en el host con `dotnet run`. **Por defecto**            | http://localhost:5000 |
-| `--stop`  | Detiene los contenedores de Docker                                                       | —                    |
-| `--logs`  | Muestra los logs en vivo de SQL Server                                                   | —                    |
-| `--help`  | Muestra el mensaje de ayuda                                                              | —                    |
+| Opcion    | Descripcion                                                                                          | URL / Puerto          |
+|-----------|------------------------------------------------------------------------------------------------------|-----------------------|
+| (ninguna) | Levanta la BD en Docker (`sqlserver` + `db-init`) y la app en el host con `dotnet run`. **Por defecto** | http://localhost:5000 |
+| `--full`  | Levanta el stack completo en Docker (BD + inicializacion + app en contenedor)                        | http://localhost:8080 |
+| `--stop`  | Detiene los contenedores de Docker                                                                   | —                     |
+| `--logs`  | Muestra los logs en vivo de SQL Server                                                               | —                     |
+| `--help`  | Muestra el mensaje de ayuda                                                                          | —                     |
 
 ### Ejemplos
 
 ```bash
-# Iniciar entorno completo (BD + app en host)
+# Iniciar entorno de desarrollo (BD + app en host)
 ./scripts/run.sh
+
+# Stack completo en Docker
+./scripts/run.sh --full
 
 # Detener contenedores
 ./scripts/run.sh --stop
@@ -108,6 +112,12 @@ Script para gestionar el ciclo de vida del entorno de desarrollo.
 # Ver logs de SQL Server
 ./scripts/run.sh --logs
 ```
+
+### Detalles del modo por defecto
+
+- Carga las variables de `.env` antes de arrancar la app.
+- Espera a que `db-init` termine correctamente antes de lanzar la app.
+- Inyecta `ConnectionStrings__DefaultConnection` apuntando a `localhost:1433` con el usuario `openclient_user` y la contraseña de `MSSQL_APP_PASSWORD`.
 
 ---
 
@@ -136,15 +146,15 @@ Si no se pasa ninguna opcion, el script solicita elegir interactivamente.
 ### Modo `--vm` (Maquina Virtual)
 
 1. Ejecuta `git pull origin develop` para obtener el codigo actualizado.
-2. Valida que exista el archivo `.env` en la raiz del proyecto.
-3. Reconstruye la imagen de produccion con Docker (usando `--env-file .env`).
-4. Levanta los contenedores `sqlserver` y la app de produccion.
-5. Espera 10 segundos y verifica el healthcheck con `curl` (HTTP 200 = exito).
+2. Valida que exista el archivo `.env` y que defina `MSSQL_PASSWORD` y `MSSQL_APP_PASSWORD`.
+3. Reconstruye la imagen de produccion del servicio `openclient`.
+4. Levanta el stack completo con `$COMPOSE up -d`: la cadena de dependencias ordena `sqlserver → db-init → openclient`.
+5. Espera 10 segundos y verifica el healthcheck con `curl` en el puerto 8080 (HTTP 200 = exito).
 
 **Requisitos previos en la VM:**
 - Docker y Docker Compose instalados.
 - Git instalado.
-- Archivo `.env` presente en la raiz del proyecto.
+- Archivo `.env` presente en la raiz del proyecto con ambas contrasenas.
 
 ---
 
@@ -152,7 +162,7 @@ Si no se pasa ninguna opcion, el script solicita elegir interactivamente.
 
 1. Valida que Azure CLI (`az`) este instalado.
 2. Verifica la sesion activa en Azure (o ejecuta `az login`).
-3. Compila la imagen Docker y la sube a Azure Container Registry (ACR).
+3. Compila la imagen Docker (`docker/Dockerfile`) y la sube a Azure Container Registry (ACR).
 4. Actualiza la Container App con la nueva imagen.
 
 **Variables de entorno configurables:**
@@ -185,7 +195,7 @@ chmod +x scripts/clear.sh
 ### Comportamiento
 
 1. Solicita confirmacion interactiva antes de eliminar los volumenes de la base de datos.
-2. Detiene los contenedores con `docker compose down` (o `down -v` si se confirma).
+2. Detiene los contenedores con `docker compose down` (o `down -v` si se confirma, lo que elimina tambien el volumen `openclient_data`).
 3. Elimina las carpetas `core/bin` y `core/obj` con `rm -rf` (sin sudo).
 4. Ejecuta `dotnet nuget locals all --clear` para limpiar la cache de paquetes.
 
@@ -204,7 +214,9 @@ chmod +x scripts/clear.sh
 
 ```
 Primera instalacion:  setup.sh
+Infraestructura dev:  dev.sh
 Desarrollo diario:    run.sh
+Stack completo:       run.sh --full
 Ver logs:             run.sh --logs
 Desplegar a VM:       deploy.sh --vm
 Desplegar a Azure:    deploy.sh --aca

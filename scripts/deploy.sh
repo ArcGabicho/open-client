@@ -30,11 +30,16 @@ deploy_vm() {
         exit 1
     fi
 
-    echo -e "${YELLOW}[+] Reconstruyendo imágenes de producción con Docker...${NC}"
-    $COMPOSE --profile prod build app-prod
+    if ! grep -q "MSSQL_APP_PASSWORD=" .env || ! grep -q "MSSQL_PASSWORD=" .env; then
+        echo -e "${RED}Error: El archivo .env debe definir MSSQL_PASSWORD y MSSQL_APP_PASSWORD.${NC}"
+        exit 1
+    fi
 
-    echo -e "${YELLOW}[+] Iniciando contenedores...${NC}"
-    $COMPOSE --profile prod up -d sqlserver app-prod
+    echo -e "${YELLOW}[+] Reconstruyendo la imagen de producción con Docker...${NC}"
+    $COMPOSE build openclient
+
+    echo -e "${YELLOW}[+] Iniciando el stack completo (sqlserver + db-init + openclient)...${NC}"
+    $COMPOSE up -d
 
     echo -e "${YELLOW}[+] Verificando estado del servicio (Healthcheck)...${NC}"
     sleep 10
@@ -45,7 +50,7 @@ deploy_vm() {
         echo -e "${GREEN}[✓] DESPLIEGUE EN VM EXITOSO (HTTP 200).${NC}"
     else
         echo -e "${RED}[!] ADVERTENCIA: La app devolvió el código HTTP $HTTP_STATUS.${NC}"
-        echo -e "Revisa los logs con: ${YELLOW}$COMPOSE logs app-prod${NC}"
+        echo -e "Revisa los logs con: ${YELLOW}$COMPOSE logs openclient${NC}"
     fi
 }
 
@@ -73,8 +78,7 @@ deploy_aca() {
     az acr build \
         --registry "$REGISTRY_NAME" \
         --image openclient-app:latest \
-        --file docker/Dockerfile \
-        --target production .
+        --file docker/Dockerfile .
 
     echo -e "${YELLOW}[+] Actualizando Container App con la nueva imagen...${NC}"
     az containerapp update \
