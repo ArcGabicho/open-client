@@ -54,7 +54,13 @@ Prepara toda la infraestructura necesaria para trabajar en modo desarrollo.
 1. Verifica que Docker y Docker Compose esten instalados.
 2. Crea el archivo `.env` desde `.env.example` (con claves aleatorias) si no existe, o agrega `MSSQL_APP_PASSWORD` si falta en un `.env` previo.
 3. Restaura paquetes .NET (`dotnet restore`) si `dotnet` esta disponible.
-4. Levanta `sqlserver` y ejecuta `db-init` en primer plano, que crea `OpenClientDb`, el login/usuario `openclient_user` y el rol `openclient_runtime`.
+4. Levanta `sqlserver` en Docker.
+5. Construye la imagen de `db-init` (garantiza que `seed.sql` este dentro).
+6. Ejecuta `docker compose run --rm db-init`, que:
+   - espera a SQL Server,
+   - crea `OpenClientDb`, el login/usuario `openclient_user`, el rol `openclient_runtime` y la tabla `dbo.Clients`,
+   - carga el seed (~4040 clientes) solo si la tabla esta vacia (nunca duplica),
+   - imprime el total de registros y termina con exit code real.
 
 ### Uso
 
@@ -69,6 +75,7 @@ chmod +x scripts/dev.sh
 |----------------|-----------------------|
 | Base de datos  | `OpenClientDb @ localhost:1433` |
 | Usuario app    | `openclient_user`     |
+| Seed           | ~4040 registros en `dbo.Clients` |
 
 ### Notas
 
@@ -91,7 +98,7 @@ Script para gestionar el ciclo de vida del entorno.
 
 | Opcion    | Descripcion                                                                                          | URL / Puerto          |
 |-----------|------------------------------------------------------------------------------------------------------|-----------------------|
-| (ninguna) | Levanta la BD en Docker (`sqlserver` + `db-init`) y la app en el host con `dotnet run`. **Por defecto** | http://localhost:5000 |
+| (ninguna) | Levanta SQL Server, ejecuta la inicializacion + seed de la BD y la app en el host. **Por defecto**   | http://localhost:5000 |
 | `--full`  | Levanta el stack completo en Docker (BD + inicializacion + app en contenedor)                        | http://localhost:8080 |
 | `--stop`  | Detiene los contenedores de Docker                                                                   | —                     |
 | `--logs`  | Muestra los logs en vivo de SQL Server                                                               | —                     |
@@ -113,11 +120,29 @@ Script para gestionar el ciclo de vida del entorno.
 ./scripts/run.sh --logs
 ```
 
-### Detalles del modo por defecto
+### Que hace el modo por defecto (paso a paso)
 
-- Carga las variables de `.env` antes de arrancar la app.
-- Espera a que `db-init` termine correctamente antes de lanzar la app.
-- Inyecta `ConnectionStrings__DefaultConnection` apuntando a `localhost:1433` con el usuario `openclient_user` y la contraseña de `MSSQL_APP_PASSWORD`.
+1. Valida que exista `.env` y carga sus variables.
+2. `$COMPOSE up -d sqlserver`: levanta SQL Server con su healthcheck.
+3. `$COMPOSE build db-init`: reconstruye la imagen del inicializador para que `seed.sql` este siempre actualizado dentro del contenedor.
+4. `$COMPOSE run --rm db-init`: ejecuta la inicializacion en primer plano; si falla, `run.sh` se detiene mostrando el error (exit code real, sin falsos exitos).
+5. `dotnet restore`.
+6. `dotnet run --no-launch-profile` en el host, inyectando:
+   - `ASPNETCORE_ENVIRONMENT=Development`
+   - `ASPNETCORE_URLS=http://localhost:5000`
+   - `ConnectionStrings__DefaultConnection` apuntando a `localhost:1433`, BD `OpenClientDb`, usuario `openclient_user`, contraseña `$MSSQL_APP_PASSWORD`.
+
+### Inicializacion e idempotencia del seed
+
+- `db-init` crea estructura (`init.sql`) y luego consulta `COUNT(*)` de `dbo.Clients`.
+- Si ya hay registros, **omite el seed**: ejecutar `./scripts/run.sh` repetidamente nunca duplica los ~4040 clientes.
+- El seed corre dentro de una transaccion atomica: un fallo a mitad de archivo no deja filas parciales.
+- Para forzar una recarga completa desde cero:
+
+```bash
+docker compose --env-file .env -f docker/docker-compose.yml down -v
+./scripts/run.sh
+```
 
 ---
 

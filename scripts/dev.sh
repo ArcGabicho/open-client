@@ -45,11 +45,14 @@ fi
 
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
-echo -e "${YELLOW}[+] Levantando infraestructura de desarrollo (SQL Server + inicialización de BD)...${NC}"
-$COMPOSE up -d sqlserver db-init
+echo -e "${YELLOW}[+] Levantando SQL Server en Docker...${NC}"
+$COMPOSE up -d sqlserver
 
-echo -e "${YELLOW}[+] Esperando la inicialización de la base de datos (db-init)...${NC}"
-$COMPOSE up db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
+echo -e "${YELLOW}[+] Construyendo imagen de inicialización de BD (db-init)...${NC}"
+$COMPOSE build db-init
+
+echo -e "${YELLOW}[+] Ejecutando inicialización + seed de la base de datos...${NC}"
+$COMPOSE run --rm db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
 
 echo -e "${GREEN}=======================================================${NC}"
 echo -e "${GREEN}¡Entorno de desarrollo listo!${NC}"

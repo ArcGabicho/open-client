@@ -92,3 +92,37 @@ BEGIN
     ADD MEMBER [openclient_user];
 END
 GO
+
+USE [OpenClientDb];
+GO
+
+IF OBJECT_ID(N'dbo.Clients', N'U') IS NULL
+BEGIN
+    PRINT 'Creando tabla dbo.Clients...';
+
+    CREATE TABLE dbo.Clients
+    (
+        Id INT IDENTITY(1,1) NOT NULL
+            CONSTRAINT PK_Clients PRIMARY KEY,
+
+        CompanyName NVARCHAR(100) NULL,
+        LegalName NVARCHAR(100) NULL,
+        Industry NVARCHAR(200) NULL,
+        FirstName NVARCHAR(50) NULL,
+        LastName NVARCHAR(50) NULL,
+        JobTitle NVARCHAR(50) NULL,
+        TaxId NVARCHAR(20) NULL,
+        PhoneNumber NVARCHAR(20) NULL,
+        Email NVARCHAR(400) NULL,
+        Website NVARCHAR(500) NULL,
+        Address NVARCHAR(500) NULL,
+        District NVARCHAR(100) NULL,
+        Province NVARCHAR(100) NULL,
+        CreatedAt DATETIME2 NOT NULL
+    );
+END
+ELSE
+BEGIN
+    PRINT 'La tabla dbo.Clients ya existe.';
+END
+GO

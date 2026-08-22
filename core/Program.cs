@@ -1,8 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using openclient.Components;
+using OpenClient.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
+builder.Services.AddDbContext<OpenClientDbContext>(options => options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 

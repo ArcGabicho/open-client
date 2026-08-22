@@ -64,18 +64,29 @@ docker build -t openclient-app -f docker/Dockerfile .
 
 ## 2. `docker/database/` — Inicializacion de la Base de Datos
 
-Contenedor one-shot que prepara SQL Server para la aplicacion. Se ejecuta una vez tras levantar `sqlserver` y termina cuando el esquema minimo esta listo.
+Contenedor one-shot que prepara SQL Server para la aplicacion: crea la estructura y carga el seed. Termina con exit code 0 unicamente si todo fue correcto (usa `sqlcmd -b`, los errores SQL abortan el proceso).
 
 ### `database/Dockerfile`
 
 - Basado en la imagen oficial `mssql/server:2022-latest` (incluye `sqlcmd`).
-- Copia `init.sh` e `init.sql` y los usa como punto de entrada.
+- Copia `init.sh`, `init.sql` y `seed.sql` dentro de la imagen.
+
+> **Importante:** Compose no reconstruye imagenes automaticamente. Los scripts ejecutan `build db-init` antes de cada corrida para garantizar que `/seed.sql` este presente y actualizado.
 
 ### `database/init.sh`
 
-1. Espera en un bucle hasta que SQL Server responda a `SELECT 1`.
+Flujo de inicializacion:
+
+1. Espera a que SQL Server responda (`sqlcmd SELECT 1` en bucle).
 2. Sustituye el placeholder `__MSSQL_APP_PASSWORD__` en `init.sql` por el valor real.
-3. Ejecuta el SQL resultante con `sqlcmd`.
+3. Ejecuta `init.sql` con `-b` (errores SQL → exit code distinto de 0).
+4. Consulta `COUNT(*)` de `dbo.Clients`.
+5. Si ya hay registros: **omite el seed** (idempotente, nunca duplica datos).
+6. Si esta vacia: ejecuta `seed.sql` envuelto en una **transaccion atomica** (`SET XACT_ABORT ON` + `BEGIN TRANSACTION` + `COMMIT`). Si cualquier lote falla, el cierre de conexion hace rollback total y no quedan filas parciales.
+7. Verifica post-condicion: si el seed no inserto registros → exit 1.
+8. Imprime claramente el total final: `Registros en dbo.Clients: N`.
+
+Todas las llamadas usan `-f 65001` para preservar los caracteres UTF-8 del dataset.
 
 ### `database/init.sql`
 
@@ -87,8 +98,20 @@ Script **idempotente** (se puede re-ejecutar sin errores):
 | `openclient_user`         | LOGIN  | Login de SQL Server para la app                  |
 | `openclient_user`         | USER   | Usuario mapeado en `OpenClientDb`                |
 | `openclient_runtime`      | ROLE   | Rol de ejecucion al que pertenece el usuario     |
+| `dbo.Clients`             | TABLE  | Tabla principal (columnas alineadas al modelo EF `Client.cs`) |
 
 La contraseña del login se inyecta via variable de entorno `MSSQL_APP_PASSWORD` (nunca se guarda en el repositorio).
+
+### `database/seed.sql`
+
+Dataset inicial (~4040 clientes peruanos) en 9 lotes `INSERT ... GO`. El script genera el contenido; no debe editarse a mano. Su ejecucion esta protegida por el guard de idempotencia descrito arriba.
+
+**Reiniciar la base de datos desde cero** (borra TODOS los datos):
+
+```bash
+docker compose --env-file .env -f docker/docker-compose.yml down -v
+./scripts/run.sh
+```
 
 ---
 
@@ -164,10 +187,12 @@ Define tres servicios encadenados por dependencias.
 ```
 sqlserver (healthy)
     ↓ depends_on: service_healthy
-db-init (exit 0)
+db-init (exit 0 = estructura + seed verificados)
     ↓ depends_on: service_completed_successfully
 openclient (puerto 8080)
 ```
+
+En modo desarrollo (`run.sh` / `dev.sh`), `db-init` se ejecuta con `docker compose run --rm db-init`: corre en primer plano, muestra su salida en vivo y propaga el exit code real. En modo `--full`, Compose lo orquesta via `depends_on` dentro del stack.
 
 ---
 
@@ -184,8 +209,11 @@ openclient (puerto 8080)
 ```bash
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
-# Arrancar solo la BD + inicializacion (modo desarrollo en host)
-$COMPOSE up -d sqlserver db-init
+# Arrancar solo SQL Server (la inicializacion la manejan los scripts)
+$COMPOSE up -d sqlserver
+
+# Ejecutar inicializacion + seed manualmente (primer plano, exit code real)
+$COMPOSE run --rm db-init
 
 # Arrancar todo el stack (BD + app en contenedor)
 $COMPOSE up -d --build
@@ -193,12 +221,21 @@ $COMPOSE up -d --build
 # Detener el stack
 $COMPOSE down
 
-# Detener y eliminar volumenes (borra datos)
+# Detener y eliminar volumenes (borra datos; reinicia la BD desde cero)
 $COMPOSE down -v
 
 # Ver logs
 $COMPOSE logs -f sqlserver
 $COMPOSE logs -f openclient
+```
+
+### Verificar el estado del seed
+
+```bash
+source .env
+docker exec openclient-database /opt/mssql-tools18/bin/sqlcmd \
+    -S localhost -U sa -P "$MSSQL_PASSWORD" -C \
+    -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM OpenClientDb.dbo.Clients;"
 ```
 
 ---

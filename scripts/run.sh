@@ -11,7 +11,7 @@ COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 show_help() {
     echo -e "Uso: ./scripts/run.sh [OPCION]"
     echo -e "Opciones:"
-    echo -e "  (ninguna)   Inicia la BD en Docker (sqlserver + db-init) y la app en el host con dotnet run"
+    echo -e "  (ninguna)   Inicia SQL Server en Docker, ejecuta la inicializacion + seed de la BD y la app en el host con dotnet run"
     echo -e "  --full      Levanta el stack completo en Docker (BD + app en contenedor, puerto 8080)"
     echo -e "  --stop      Detiene los contenedores de Docker"
     echo -e "  --logs      Muestra los logs de SQL Server"
@@ -47,8 +47,8 @@ case "$MODE" in
         echo -e "${GREEN}[+] Levantando el stack completo en Docker (BD + inicialización + app)...${NC}"
         $COMPOSE up -d --build
 
-        sleep 5
-        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080 || true)
+        HTTP_STATUS=$(curl --retry 15 --retry-delay 2 --retry-connrefused \
+            -s -o /dev/null -w "%{http_code}" http://localhost:8080 || true)
 
         if [ "$HTTP_STATUS" -eq 200 ]; then
             echo -e "${GREEN}[✓] Stack completo en marcha. App disponible en ${YELLOW}http://localhost:8080${NC}"
@@ -68,18 +68,28 @@ case "$MODE" in
         source .env
         set +a
 
-        echo -e "${GREEN}[+] Levantando infraestructura de BD en Docker (sqlserver + db-init)...${NC}"
-        $COMPOSE up -d sqlserver db-init
+        echo -e "${GREEN}[+] Levantando SQL Server en Docker...${NC}"
+        $COMPOSE up -d sqlserver
 
-        echo -e "${YELLOW}[+] Esperando la inicialización de la base de datos (db-init)...${NC}"
-        $COMPOSE up db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
+        if command -v ss >/dev/null 2>&1 && ss -tlnH 2>/dev/null | awk '{print $4}' | grep -qE '[:.]5000$'; then
+            echo -e "${RED}Error: El puerto 5000 ya esta en uso (¿otra instancia de la app sigue corriendo?).${NC}"
+            echo -e "Libera el puerto y vuelve a intentar. Pista: ${YELLOW}fuser -k 5000/tcp${NC} o busca con: ${YELLOW}ss -tlnp | grep 5000${NC}"
+            exit 1
+        fi
+
+        echo -e "${YELLOW}[+] Construyendo imagen de inicialización de BD (db-init)...${NC}"
+        $COMPOSE build db-init
+
+        echo -e "${YELLOW}[+] Ejecutando inicialización + seed de la base de datos...${NC}"
+        $COMPOSE run --rm db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
 
         echo -e "${YELLOW}[+] Restaurando paquetes .NET...${NC}"
         dotnet restore ./core/*.csproj
 
         echo -e "${GREEN}[+] Iniciando open-client en el host (dotnet run)...${NC}"
+        ASPNETCORE_ENVIRONMENT="Development" \
         ASPNETCORE_URLS="http://localhost:5000" \
         ConnectionStrings__DefaultConnection="Server=localhost,1433;Database=OpenClientDb;User Id=openclient_user;Password=${MSSQL_APP_PASSWORD};TrustServerCertificate=True;" \
-            dotnet run --project core/openclient.csproj
+            dotnet run --no-launch-profile --project core/openclient.csproj
         ;;
 esac
