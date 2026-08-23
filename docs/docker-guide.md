@@ -9,7 +9,13 @@ docker/
 └── database/
     ├── Dockerfile            # Contenedor de inicializacion de la BD
     ├── init.sh               # Script de arranque del init-container
-    └── init.sql              # DDL idempotente (DB, login, usuario, rol)
+    ├── init.sql              # DDL idempotente (DB, login, usuario, rol)
+    ├── admin.sql             # Plantilla idempotente del administrador (dbo.Users)
+    ├── seed.sql              # Dataset inicial de clientes (~4040 filas)
+    └── PasswordHasher/       # Utilidad self-contained: password -> hash BCrypt
+        ├── PasswordHasher.csproj
+        ├── Program.cs
+        └── publish/          # Salida del publish (no se versiona)
 ```
 
 ---
@@ -68,8 +74,12 @@ Contenedor one-shot que prepara SQL Server para la aplicacion: crea la estructur
 
 ### `database/Dockerfile`
 
-- Basado en la imagen oficial `mssql/server:2022-latest` (incluye `sqlcmd`).
-- Copia `init.sh`, `init.sql` y `seed.sql` dentro de la imagen.
+- Basado en la imagen oficial `mssql/server:2022-latest` (incluye `sqlcmd`, no incluye .NET).
+- Copia `init.sh`, `init.sql`, `admin.sql`, `seed.sql` y el binario
+  `PasswordHasher/publish/PasswordHasher` dentro de la imagen.
+- El binario se publica **self-contained linux-x64 single-file** (ver
+  [database.md](database.md)): un unico ejecutable sin dependencias, por eso se
+  copia solo ese archivo y se ejecuta como `/PasswordHasher`.
 
 > **Importante:** Compose no reconstruye imagenes automaticamente. Los scripts ejecutan `build db-init` antes de cada corrida para garantizar que `/seed.sql` este presente y actualizado.
 
@@ -78,15 +88,20 @@ Contenedor one-shot que prepara SQL Server para la aplicacion: crea la estructur
 Flujo de inicializacion:
 
 1. Espera a que SQL Server responda (`sqlcmd SELECT 1` en bucle).
-2. Sustituye el placeholder `__MSSQL_APP_PASSWORD__` en `init.sql` por el valor real.
+2. Sustituye el placeholder `__MSSQL_APP_PASSWORD__` en `init.sql` por el valor real (sustitucion literal en bash, sin sed).
 3. Ejecuta `init.sql` con `-b` (errores SQL → exit code distinto de 0).
-4. Consulta `COUNT(*)` de `dbo.Clients`.
-5. Si ya hay registros: **omite el seed** (idempotente, nunca duplica datos).
-6. Si esta vacia: ejecuta `seed.sql` envuelto en una **transaccion atomica** (`SET XACT_ABORT ON` + `BEGIN TRANSACTION` + `COMMIT`). Si cualquier lote falla, el cierre de conexion hace rollback total y no quedan filas parciales.
-7. Verifica post-condicion: si el seed no inserto registros → exit 1.
-8. Imprime claramente el total final: `Registros en dbo.Clients: N`.
+4. Valida `OPENCLIENT_ADMIN_EMAIL` y `OPENCLIENT_ADMIN_PASSWORD` (vienen del `.env` via compose).
+5. Ejecuta `/PasswordHasher`: genera el hash BCrypt del administrador leyendo la contraseña desde el entorno (nunca argv ni archivos).
+6. Genera `/tmp/admin.sql` sustituyendo `__ADMIN_EMAIL__` y `__ADMIN_PASSWORD_HASH__` y lo ejecuta con sqlcmd (INSERT idempotente en `dbo.Users`).
+7. Consulta `COUNT(*)` de `dbo.Clients`.
+8. Si ya hay registros: **omite el seed** (idempotente, nunca duplica datos).
+9. Si esta vacia: ejecuta `seed.sql` envuelto en una **transaccion atomica** (`SET XACT_ABORT ON` + `BEGIN TRANSACTION` + `COMMIT`). Si cualquier lote falla, el cierre de conexion hace rollback total y no quedan filas parciales.
+10. Verifica post-condicion: si el seed no inserto registros → exit 1.
+11. Imprime claramente el total final: `Registros en dbo.Clients: N`.
 
-Todas las llamadas usan `-f 65001` para preservar los caracteres UTF-8 del dataset.
+Todas las llamadas usan `-f 65001` para preservar los caracteres UTF-8 del dataset. Los archivos temporales `/tmp/*.sql` se eliminan con `trap ... EXIT INT TERM`. Ni el password ni el hash se imprimen jamas.
+
+Detalles completos del flujo: [database.md](database.md).
 
 ### `database/init.sql`
 
@@ -98,9 +113,20 @@ Script **idempotente** (se puede re-ejecutar sin errores):
 | `openclient_user`         | LOGIN  | Login de SQL Server para la app                  |
 | `openclient_user`         | USER   | Usuario mapeado en `OpenClientDb`                |
 | `openclient_runtime`      | ROLE   | Rol de ejecucion al que pertenece el usuario     |
+| `dbo.Users`               | TABLE  | Usuarios de la app (admin inicial + futuros)     |
 | `dbo.Clients`             | TABLE  | Tabla principal (columnas alineadas al modelo EF `Client.cs`) |
 
 La contraseña del login se inyecta via variable de entorno `MSSQL_APP_PASSWORD` (nunca se guarda en el repositorio).
+
+### `database/admin.sql`
+
+Plantilla idempotente del administrador. Contiene los placeholders
+`__ADMIN_EMAIL__` y `__ADMIN_PASSWORD_HASH__`, sustituidos en memoria por
+`init.sh` durante la inicializacion; el resultado se escribe solo en `/tmp`
+del contenedor y se elimina al terminar. El hash lo genera `/PasswordHasher`
+(BCrypt, work factor 12) a partir de `OPENCLIENT_ADMIN_PASSWORD`. La tabla
+`dbo.Users` se crea aqui si no existe y se otorga `SELECT` al rol
+`openclient_runtime`.
 
 ### `database/seed.sql`
 
@@ -154,10 +180,12 @@ Define tres servicios encadenados por dependencias.
 
 **Variables de entorno:**
 
-| Variable             | Valor                     | Descripcion                                    |
-|----------------------|---------------------------|------------------------------------------------|
-| `MSSQL_PASSWORD`     | `${MSSQL_PASSWORD}`       | Contraseña SA para conectar con sqlcmd         |
-| `MSSQL_APP_PASSWORD` | `${MSSQL_APP_PASSWORD}`   | Contraseña para crear el login `openclient_user`|
+| Variable                   | Valor                          | Descripcion                                            |
+|----------------------------|--------------------------------|--------------------------------------------------------|
+| `MSSQL_PASSWORD`           | `${MSSQL_PASSWORD}`            | Contraseña SA para conectar con sqlcmd                 |
+| `MSSQL_APP_PASSWORD`       | `${MSSQL_APP_PASSWORD}`        | Contraseña para crear el login `openclient_user`       |
+| `OPENCLIENT_ADMIN_EMAIL`   | `${OPENCLIENT_ADMIN_EMAIL}`    | Email del administrador inicial (`dbo.Users`)          |
+| `OPENCLIENT_ADMIN_PASSWORD`| `${OPENCLIENT_ADMIN_PASSWORD}` | Password del admin; se guarda como hash BCrypt         |
 
 **Dependencia:** arranca solo cuando `sqlserver` esta `healthy`.
 
@@ -288,6 +316,8 @@ El `docker-compose.yml` lee las variables desde un archivo `.env` en la raiz del
 ```
 MSSQL_PASSWORD=ProdPass_abc123def456!        # Contraseña del SA
 MSSQL_APP_PASSWORD=AppPass_xyz789!           # Contraseña de openclient_user
+OPENCLIENT_ADMIN_EMAIL=admin@openclient.local
+OPENCLIENT_ADMIN_PASSWORD=SuperPassword123!  # Se almacena como hash BCrypt
 ```
 
-Los scripts `setup.sh` y `dev.sh` generan este archivo automaticamente con contraseñas aleatorias.
+Los scripts `setup.sh` y `dev.sh` generan este archivo automaticamente con contraseñas aleatorias. Detalle completo del flujo de inicializacion: [database-guide.md](database-guide.md).

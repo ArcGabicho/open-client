@@ -7,6 +7,11 @@
 *.userosscache
 *.sln.docstates
 
+## --- .NET PasswordHasher ---
+docker/database/PasswordHasher/bin/
+docker/database/PasswordHasher/obj/
+docker/database/PasswordHasher/publish/
+
 ## --- Visual Studio & VS Code ---
 .vscode/*
 !.vscode/settings.json
@@ -60,9 +65,13 @@ wwwroot/files/
 appsettings.Local.json
 appsettings.Production.json
 appsettings.Secrets.json
+.env
+.env.*
 *.env
 *.env.*
 !.env.example
+*.pem
+*.key
 
 ## --- Sistema Operativo & Docker ---
 .DS_Store

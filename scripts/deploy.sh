@@ -35,6 +35,11 @@ deploy_vm() {
         exit 1
     fi
 
+    if ! grep -q "OPENCLIENT_ADMIN_EMAIL=" .env || ! grep -q "OPENCLIENT_ADMIN_PASSWORD=" .env; then
+        echo -e "${RED}Error: El archivo .env debe definir OPENCLIENT_ADMIN_EMAIL y OPENCLIENT_ADMIN_PASSWORD (administrador inicial de dbo.Users).${NC}"
+        exit 1
+    fi
+
     echo -e "${YELLOW}[+] Reconstruyendo la imagen de producción con Docker...${NC}"
     $COMPOSE build openclient
 

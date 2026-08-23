@@ -5,6 +5,16 @@ set -e
 SQLCMD="/opt/mssql-tools18/bin/sqlcmd"
 SQLSERVER_HOST="sqlserver"
 
+TMP_INIT_SQL="/tmp/init.sql"
+TMP_ADMIN_SQL="/tmp/admin.sql"
+TMP_SEED_SQL="/tmp/seed_tx.sql"
+
+cleanup() {
+    rm -f "$TMP_INIT_SQL" "$TMP_ADMIN_SQL" "$TMP_SEED_SQL"
+}
+
+trap cleanup EXIT INT TERM
+
 sqlcmd() {
     $SQLCMD \
         -S "$SQLSERVER_HOST" \
@@ -33,6 +43,26 @@ get_clients_count() {
     echo "$count" | tr -d '[:space:]'
 }
 
+# Escapa comillas simples para literales T-SQL: ' -> ''
+tsql_escape() {
+    local q="'"
+    local s=$1
+    printf '%s' "${s//$q/$q$q}"
+}
+
+# Sustituye placeholders de forma literal, sin sed ni regex:
+# inmune a caracteres especiales (& \ | $ . *) en valores provenientes de .env.
+replace_placeholders() {
+    local template="$1" output="$2" line
+    : > "$output"
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line//__MSSQL_APP_PASSWORD__/${MSSQL_APP_PASSWORD:-}}"
+        line="${line//__ADMIN_EMAIL__/${ADMIN_EMAIL_ESCAPED:-}}"
+        line="${line//__ADMIN_PASSWORD_HASH__/${ADMIN_PASSWORD_HASH:-}}"
+        printf '%s\n' "$line" >> "$output"
+    done < "$template"
+}
+
 echo "Esperando a SQL Server..."
 
 until sqlcmd -Q "SELECT 1" > /dev/null 2>&1
@@ -44,12 +74,56 @@ echo "SQL Server esta listo."
 
 echo "Inicializando la base de datos de Open Client (estructura)."
 
-sed "s|__MSSQL_APP_PASSWORD__|$MSSQL_APP_PASSWORD|g" \
-    /init.sql > /tmp/init.sql
+replace_placeholders /init.sql "$TMP_INIT_SQL"
 
-sqlcmd -i /tmp/init.sql
+sqlcmd -i "$TMP_INIT_SQL"
 
 echo "Estructura de base de datos verificada."
+
+echo "Configurando administrador inicial..."
+
+if [ -z "${OPENCLIENT_ADMIN_EMAIL:-}" ]; then
+    echo "ERROR: OPENCLIENT_ADMIN_EMAIL no está definido." >&2
+    exit 1
+fi
+
+if [ -z "${OPENCLIENT_ADMIN_PASSWORD:-}" ]; then
+    echo "ERROR: OPENCLIENT_ADMIN_PASSWORD no está definido." >&2
+    exit 1
+fi
+
+if [[ ! "$OPENCLIENT_ADMIN_EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+$ ]]; then
+    echo "ERROR: OPENCLIENT_ADMIN_EMAIL no tiene un formato valido." >&2
+    exit 1
+fi
+
+# PasswordHasher (self-contained linux-x64) lee OPENCLIENT_ADMIN_PASSWORD
+# desde el entorno; la contraseña nunca pasa por argv ni por archivos.
+# Se ejecuta el binario directamente: NO existe /PasswordHasher.dll en la
+# imagen porque el publish es single-file.
+if ! ADMIN_PASSWORD_HASH=$(/PasswordHasher); then
+    echo "ERROR: PasswordHasher falló al generar el hash." >&2
+    exit 1
+fi
+
+if [ -z "$ADMIN_PASSWORD_HASH" ]; then
+    echo "ERROR: No se pudo generar el hash del administrador." >&2
+    exit 1
+fi
+
+echo "Hash del administrador generado correctamente."
+
+ADMIN_EMAIL_ESCAPED=$(tsql_escape "$OPENCLIENT_ADMIN_EMAIL")
+
+replace_placeholders /admin.sql "$TMP_ADMIN_SQL"
+
+sqlcmd -d OpenClientDb -i "$TMP_ADMIN_SQL"
+
+unset ADMIN_PASSWORD_HASH ADMIN_EMAIL_ESCAPED OPENCLIENT_ADMIN_PASSWORD
+
+rm -f "$TMP_ADMIN_SQL"
+
+echo "Administrador verificado."
 
 CLIENTS_BEFORE=$(get_clients_count)
 
@@ -73,9 +147,9 @@ else
         cat /seed.sql
         echo ""
         echo "IF @@TRANCOUNT > 0 COMMIT TRANSACTION;"
-    } > /tmp/seed_tx.sql
+    } > "$TMP_SEED_SQL"
 
-    sqlcmd -d OpenClientDb -i /tmp/seed_tx.sql
+    sqlcmd -d OpenClientDb -i "$TMP_SEED_SQL"
 
     CLIENTS_AFTER=$(get_clients_count)
 

@@ -52,7 +52,7 @@ Prepara toda la infraestructura necesaria para trabajar en modo desarrollo.
 ### Que hace
 
 1. Verifica que Docker y Docker Compose esten instalados.
-2. Crea el archivo `.env` desde `.env.example` (con claves aleatorias) si no existe, o agrega `MSSQL_APP_PASSWORD` si falta en un `.env` previo.
+2. Crea el archivo `.env` desde `.env.example` (con claves aleatorias) si no existe, o completa en un `.env` previo las variables que falten: `MSSQL_APP_PASSWORD`, `OPENCLIENT_ADMIN_EMAIL` y `OPENCLIENT_ADMIN_PASSWORD`.
 3. Restaura paquetes .NET (`dotnet restore`) si `dotnet` esta disponible.
 4. Levanta `sqlserver` en Docker.
 5. Construye la imagen de `db-init` (garantiza que `seed.sql` este dentro).
@@ -124,10 +124,11 @@ Script para gestionar el ciclo de vida del entorno.
 
 1. Valida que exista `.env` y carga sus variables.
 2. `$COMPOSE up -d sqlserver`: levanta SQL Server con su healthcheck.
-3. `$COMPOSE build db-init`: reconstruye la imagen del inicializador para que `seed.sql` este siempre actualizado dentro del contenedor.
-4. `$COMPOSE run --rm db-init`: ejecuta la inicializacion en primer plano; si falla, `run.sh` se detiene mostrando el error (exit code real, sin falsos exitos).
-5. `dotnet restore`.
-6. `dotnet run --no-launch-profile` en el host, inyectando:
+3. Publica `PasswordHasher` como binario self-contained linux-x64 single-file (`dotnet publish ... -p:PublishSingleFile=true`); ese ejecutable unico es el que la imagen `db-init` copia a `/PasswordHasher` para hashear la contraseña del administrador (ver [database.md](database.md)).
+4. `$COMPOSE build db-init`: reconstruye la imagen del inicializador para que `seed.sql` este siempre actualizado dentro del contenedor.
+5. `$COMPOSE run --rm db-init`: ejecuta la inicializacion en primer plano; si falla, `run.sh` se detiene mostrando el error (exit code real, sin falsos exitos).
+6. `dotnet restore`.
+7. `dotnet run --no-launch-profile` en el host, inyectando:
    - `ASPNETCORE_ENVIRONMENT=Development`
    - `ASPNETCORE_URLS=http://localhost:5000`
    - `ConnectionStrings__DefaultConnection` apuntando a `localhost:1433`, BD `OpenClientDb`, usuario `openclient_user`, contraseña `$MSSQL_APP_PASSWORD`.

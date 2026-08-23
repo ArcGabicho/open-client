@@ -18,14 +18,18 @@ if [ ! -f .env ]; then
 
         SA_PASS="DevPass_$(openssl rand -hex 6)!"
         APP_PASS="AppPass_$(openssl rand -hex 6)!"
+        ADMIN_PASS="AdminPass_$(openssl rand -hex 6)!"
         sed -i "s/MSSQL_PASSWORD=.*/MSSQL_PASSWORD=${SA_PASS}/" .env
         sed -i "s/MSSQL_APP_PASSWORD=.*/MSSQL_APP_PASSWORD=${APP_PASS}/" .env
+        sed -i "s/OPENCLIENT_ADMIN_PASSWORD=.*/OPENCLIENT_ADMIN_PASSWORD=${ADMIN_PASS}/" .env
         echo -e "${GREEN}[✓] Archivo .env generado con claves aleatorias temporales.${NC}"
     else
         echo -e "${YELLOW}[!] No se encontró .env.example. Creando .env básico...${NC}"
         {
             echo "MSSQL_PASSWORD=DevPass_$(openssl rand -hex 6)!"
             echo "MSSQL_APP_PASSWORD=AppPass_$(openssl rand -hex 6)!"
+            echo "OPENCLIENT_ADMIN_EMAIL=admin@openclient.local"
+            echo "OPENCLIENT_ADMIN_PASSWORD=AdminPass_$(openssl rand -hex 6)!"
         } > .env
     fi
 else
@@ -35,6 +39,16 @@ else
         APP_PASS="AppPass_$(openssl rand -hex 6)!"
         echo "MSSQL_APP_PASSWORD=${APP_PASS}" >> .env
         echo -e "${YELLOW}[+] Variable MSSQL_APP_PASSWORD agregada al .env existente.${NC}"
+    fi
+
+    if ! grep -q "OPENCLIENT_ADMIN_EMAIL=" .env; then
+        echo "OPENCLIENT_ADMIN_EMAIL=admin@openclient.local" >> .env
+        echo -e "${YELLOW}[+] Variable OPENCLIENT_ADMIN_EMAIL agregada al .env existente.${NC}"
+    fi
+
+    if ! grep -q "OPENCLIENT_ADMIN_PASSWORD=" .env; then
+        echo "OPENCLIENT_ADMIN_PASSWORD=AdminPass_$(openssl rand -hex 6)!" >> .env
+        echo -e "${YELLOW}[+] Variable OPENCLIENT_ADMIN_PASSWORD agregada al .env existente.${NC}"
     fi
 fi
 

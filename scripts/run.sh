@@ -77,6 +77,19 @@ case "$MODE" in
             exit 1
         fi
 
+        echo "[+] Publicando PasswordHasher..."
+
+        # Single-file + self-contained: /PasswordHasher es un unico binario
+        # nativo con runtime y app embebidos. El apphost NO busca
+        # /PasswordHasher.dll en disco, asi que el COPY del Dockerfile de
+        # db-init (solo el ejecutable) funciona tal cual.
+        dotnet publish docker/database/PasswordHasher/PasswordHasher.csproj \
+            -c Release \
+            -r linux-x64 \
+            --self-contained true \
+            -p:PublishSingleFile=true \
+            -o docker/database/PasswordHasher/publish
+
         echo -e "${YELLOW}[+] Construyendo imagen de inicialización de BD (db-init)...${NC}"
         $COMPOSE build db-init
 

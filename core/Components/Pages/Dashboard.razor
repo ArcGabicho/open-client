@@ -1,0 +1,18 @@
+@page "/dashboard"
+@layout DashboardLayout
+@attribute [Authorize]
+
+<PageTitle>Dashboard - Open Client</PageTitle>
+
+<h1>Dashboard</h1>
+
+<button type="button" @onclick="Logout">
+    Cerrar sesión
+</button>
+
+@code {
+    private async Task Logout()
+    {
+        // llamar al endpoint y navegar
+    }
+}

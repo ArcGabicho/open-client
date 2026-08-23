@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using OpenClient.Models.Domain;
 
-namespace OpenClient.Data.Configurations;
+namespace OpenClient.Data;
 
 public class ClientConfiguration : IEntityTypeConfiguration<Client>
 {

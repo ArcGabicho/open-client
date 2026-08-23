@@ -28,6 +28,8 @@ services:
     environment:
       MSSQL_PASSWORD: ${MSSQL_PASSWORD}
       MSSQL_APP_PASSWORD: ${MSSQL_APP_PASSWORD}
+      OPENCLIENT_ADMIN_EMAIL: ${OPENCLIENT_ADMIN_EMAIL}
+      OPENCLIENT_ADMIN_PASSWORD: ${OPENCLIENT_ADMIN_PASSWORD}
     depends_on:
       sqlserver:
         condition: service_healthy

@@ -3,6 +3,11 @@
 **/obj/
 **/out/
 
+# Ignorar secretos locales (.env nunca debe entrar al contexto de build)
+.env
+.env.*
+!.env.example
+
 # Ignorar control de versiones y documentación
 .git/
 .gitignore

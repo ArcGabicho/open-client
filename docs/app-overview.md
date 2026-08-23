@@ -89,7 +89,7 @@ Puedes conectarte al contenedor de la base de datos usando Azure Data Studio, DB
 | Contrasena (admin) | Valor de `MSSQL_PASSWORD` en `.env` |
 | Trust Server Certificate | True |
 
-El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `openclient_runtime` se crean automaticamente al arrancar el servicio `db-init` del Docker Compose.
+El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `openclient_runtime` se crean automaticamente al arrancar el servicio `db-init` del Docker Compose. El mismo servicio crea la tabla `dbo.Users` y siembra el administrador inicial (email de `OPENCLIENT_ADMIN_EMAIL`, hash BCrypt generado por `PasswordHasher` a partir de `OPENCLIENT_ADMIN_PASSWORD`). Detalles: [database.md](database.md).
 
 ## Variables de Entorno
 
@@ -99,5 +99,7 @@ El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `opencli
 | ConnectionStrings__DefaultConnection | Cadena de conexion hacia el servidor SQL Server | Server=sqlserver,1433;Database=OpenClientDb;User Id=openclient_user;Password=...;TrustServerCertificate=True; |
 | MSSQL_PASSWORD | Contrasena del usuario administrador sa | Definida en `.env` |
 | MSSQL_APP_PASSWORD | Contrasena del login de aplicacion openclient_user | Definida en `.env` |
+| OPENCLIENT_ADMIN_EMAIL | Email del administrador inicial (`dbo.Users`) | admin@openclient.local |
+| OPENCLIENT_ADMIN_PASSWORD | Contrasena del administrador; se almacena como hash BCrypt | Definida en `.env` |
 
 Consulta la plantilla completa en `.env.example`.

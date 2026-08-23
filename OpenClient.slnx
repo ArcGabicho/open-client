@@ -2,4 +2,8 @@
   <Folder Name="/core/">
     <Project Path="core/openclient.csproj" />
   </Folder>
+  <Folder Name="/docker/" />
+  <Folder Name="/docker/database/">
+    <Project Path="docker/database/PasswordHasher/PasswordHasher.csproj" />
+  </Folder>
 </Solution>
