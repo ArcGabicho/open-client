@@ -64,7 +64,7 @@ case "$MODE" in
         fi
 
         set -a
-        # shellcheck disable=SC1091
+
         source .env
         set +a
 
@@ -79,10 +79,6 @@ case "$MODE" in
 
         echo "[+] Publicando PasswordHasher..."
 
-        # Single-file + self-contained: /PasswordHasher es un unico binario
-        # nativo con runtime y app embebidos. El apphost NO busca
-        # /PasswordHasher.dll en disco, asi que el COPY del Dockerfile de
-        # db-init (solo el ejecutable) funciona tal cual.
         dotnet publish docker/database/PasswordHasher/PasswordHasher.csproj \
             -c Release \
             -r linux-x64 \

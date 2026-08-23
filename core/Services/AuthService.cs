@@ -54,9 +54,6 @@ public class AuthService
         }
         catch (Exception ex)
         {
-            // Hash corrupto o con formato invalido (p. ej. "Invalid salt
-            // version"). No debe tumbar el endpoint: se rechaza el acceso.
-            // NUNCA se registra ni la contrasena ni el hash.
             _logger.LogError(
                 ex,
                 "El hash almacenado del usuario UserId={UserId} es invalido. Acceso rechazado.",

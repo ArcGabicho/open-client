@@ -36,11 +36,6 @@
         <link rel="icon" type="image/png" href="favicon.png" />
     </head>
     <body class="container">
-        @*
-            SSR estático por defecto: las páginas son estáticas salvo opt-in
-            explícito (InteractiveServer en Dashboard). El login NO tiene
-            circuito: es un formulario HTML POST tradicional.
-        *@
         <Routes />
         <ReconnectModal />
         <script src="@Assets["_framework/blazor.web.js"]"></script>

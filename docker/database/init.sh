@@ -43,15 +43,12 @@ get_clients_count() {
     echo "$count" | tr -d '[:space:]'
 }
 
-# Escapa comillas simples para literales T-SQL: ' -> ''
 tsql_escape() {
     local q="'"
     local s=$1
     printf '%s' "${s//$q/$q$q}"
 }
 
-# Sustituye placeholders de forma literal, sin sed ni regex:
-# inmune a caracteres especiales (& \ | $ . *) en valores provenientes de .env.
 replace_placeholders() {
     local template="$1" output="$2" line
     : > "$output"
@@ -97,10 +94,6 @@ if [[ ! "$OPENCLIENT_ADMIN_EMAIL" =~ ^[^@[:space:]]+@[^@[:space:]]+$ ]]; then
     exit 1
 fi
 
-# PasswordHasher (self-contained linux-x64) lee OPENCLIENT_ADMIN_PASSWORD
-# desde el entorno; la contraseña nunca pasa por argv ni por archivos.
-# Se ejecuta el binario directamente: NO existe /PasswordHasher.dll en la
-# imagen porque el publish es single-file.
 if ! ADMIN_PASSWORD_HASH=$(/PasswordHasher); then
     echo "ERROR: PasswordHasher falló al generar el hash." >&2
     exit 1
@@ -111,8 +104,6 @@ if [ -z "$ADMIN_PASSWORD_HASH" ]; then
     exit 1
 fi
 
-# Formato BCrypt valido: $2a/$2b/$2y + coste (2 digitos) + 53 caracteres
-# [./A-Za-z0-9] (22 de salt + 31 de hash = 60 en total).
 BCRYPT_RE='^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$'
 
 if ! printf '%s' "$ADMIN_PASSWORD_HASH" | grep -Eq "$BCRYPT_RE"; then
@@ -146,10 +137,6 @@ if [ "$CLIENTS_BEFORE" -gt 0 ]; then
 else
     echo "Tabla dbo.Clients vacia. Cargando seed de Open Client (transaccion atomica)..."
 
-    # El seed se envuelve en una unica transaccion: BEGIN TRAN sobrevive a los
-    # separadores GO (es de sesion). Con XACT_ABORT ON y sqlcmd -b, cualquier
-    # error aborta el proceso y el cierre de conexion hace ROLLBACK total,
-    # evitando seeds parciales que el guard confundiria con "ya sembrado".
     {
         echo "SET XACT_ABORT ON;"
         echo "BEGIN TRANSACTION;"
