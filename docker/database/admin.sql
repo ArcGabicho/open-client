@@ -56,6 +56,14 @@ BEGIN
 END
 ELSE
 BEGIN
-    PRINT 'El administrador ya existe.';
+    -- Política de contraseñas: .env es la fuente de verdad del administrador
+    -- inicial. Si el admin ya existe, SOLO se actualiza el hash (nunca el
+    -- correo, rol ni estado), permitiendo rotar OPENCLIENT_ADMIN_PASSWORD
+    -- sin recrear la base de datos.
+    UPDATE dbo.Users
+    SET PasswordHash = N'__ADMIN_PASSWORD_HASH__'
+    WHERE Email = N'__ADMIN_EMAIL__';
+
+    PRINT 'Administrador existente: hash actualizado desde .env.';
 END
 GO

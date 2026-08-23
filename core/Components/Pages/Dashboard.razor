@@ -1,18 +1,24 @@
 @page "/dashboard"
 @layout DashboardLayout
 @attribute [Authorize]
+@rendermode InteractiveServer
 
 <PageTitle>Dashboard - Open Client</PageTitle>
 
 <h1>Dashboard</h1>
 
-<button type="button" @onclick="Logout">
-    Cerrar sesión
-</button>
+@*
+    Logout 100% nativo del navegador: el click NO pasa por el circuito.
 
-@code {
-    private async Task Logout()
-    {
-        // llamar al endpoint y navegar
-    }
-}
+    - <a> con href real: el navegador hace la navegación HTTP él solo, sin
+      JS interop y sin enviar ningún mensaje por el WebSocket del circuito.
+      (NavigateTo(forceLoad:true) también navega, pero la orden viaja por
+      interop sobre el propio socket que se está cerrando, lo que provoca
+      "Uncaught (in promise) WebSocket is not in the OPEN state").
+    - data-enhance-nav="false": evita que blazor.web.js intercepte el enlace
+      con navegación mejorada (fetch + DOM swap), lo que mantendría vivo el
+      circuito del dashboard mientras se muestra /log-in.
+*@
+<a class="logout-link" href="/auth/log-out" data-enhance-nav="false">
+    Cerrar sesión
+</a>

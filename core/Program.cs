@@ -16,6 +16,12 @@ builder.Services.AddDbContext<OpenClientDbContext>(options =>
 
 builder.Services.AddScoped<AuthService>();
 
+// Cookie authentication: unico mecanismo de sesion de la aplicacion.
+// - SecurePolicy.SameAsRequest permite http://localhost:5000 en Development
+//   y exige Secure automaticamente cuando el trafico llega por HTTPS.
+// - HttpOnly + SameSite=Lax: la cookie no es legible por JS y se envia en
+//   navegaciones top-level (necesario para los redirects de login/logout).
+// - Expiracion deslizante de 8h: la sesion caduca tras 8h de inactividad.
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -24,6 +30,12 @@ builder.Services
         options.AccessDeniedPath = "/access-denied";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
         options.SlidingExpiration = true;
+
+        options.Cookie.Name = ".OpenClient.Auth";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        options.Cookie.IsEssential = true;
     });
 
 builder.Services.AddAuthorization();

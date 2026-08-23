@@ -10,26 +10,75 @@ public class AuthService
 {
     private readonly OpenClientDbContext _db;
 
-    public AuthService(OpenClientDbContext db)
+    private readonly ILogger<AuthService> _logger;
+
+    public AuthService(
+        OpenClientDbContext db,
+        ILogger<AuthService> logger)
     {
         _db = db;
+        _logger = logger;
     }
 
     public async Task<User?> ValidateCredentialsAsync(LoginModel model)
     {
         var user = await _db.Users
-            .FirstOrDefaultAsync(x =>
-                x.Email == model.Email &&
-                x.IsActive);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(x => x.Email == model.Email);
 
         if (user is null)
+        {
+            _logger.LogWarning(
+                "Intento de inicio de sesion con correo inexistente: {Email}",
+                model.Email);
+
             return null;
+        }
 
-        var passwordValid = BCrypt.Net.BCrypt.Verify(
-            model.Password,
-            user.PasswordHash);
+        if (!user.IsActive)
+        {
+            _logger.LogWarning(
+                "Intento de inicio de sesion de un usuario inactivo: UserId={UserId}",
+                user.Id);
 
-        return passwordValid ? user : null;
+            return null;
+        }
+
+        bool passwordValid;
+
+        try
+        {
+            passwordValid = BCrypt.Net.BCrypt.Verify(
+                model.Password,
+                user.PasswordHash);
+        }
+        catch (Exception ex)
+        {
+            // Hash corrupto o con formato invalido (p. ej. "Invalid salt
+            // version"). No debe tumbar el endpoint: se rechaza el acceso.
+            // NUNCA se registra ni la contrasena ni el hash.
+            _logger.LogError(
+                ex,
+                "El hash almacenado del usuario UserId={UserId} es invalido. Acceso rechazado.",
+                user.Id);
+
+            return null;
+        }
+
+        if (!passwordValid)
+        {
+            _logger.LogWarning(
+                "Contrasena incorrecta para UserId={UserId}",
+                user.Id);
+
+            return null;
+        }
+
+        _logger.LogInformation(
+            "Credenciales validas para UserId={UserId}",
+            user.Id);
+
+        return user;
     }
 
     public IEnumerable<Claim> CreateClaims(User user)

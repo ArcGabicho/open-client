@@ -111,6 +111,15 @@ if [ -z "$ADMIN_PASSWORD_HASH" ]; then
     exit 1
 fi
 
+# Formato BCrypt valido: $2a/$2b/$2y + coste (2 digitos) + 53 caracteres
+# [./A-Za-z0-9] (22 de salt + 31 de hash = 60 en total).
+BCRYPT_RE='^\$2[aby]\$[0-9]{2}\$[./A-Za-z0-9]{53}$'
+
+if ! printf '%s' "$ADMIN_PASSWORD_HASH" | grep -Eq "$BCRYPT_RE"; then
+    echo "ERROR: El hash generado no tiene un formato BCrypt valido." >&2
+    exit 1
+fi
+
 echo "Hash del administrador generado correctamente."
 
 ADMIN_EMAIL_ESCAPED=$(tsql_escape "$OPENCLIENT_ADMIN_EMAIL")
