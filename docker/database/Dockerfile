@@ -4,11 +4,8 @@ USER root
 
 COPY init.sh /init.sh
 COPY init.sql /init.sql
-COPY admin.sql /admin.sql
-COPY seed.sql /seed.sql
-COPY PasswordHasher/publish/PasswordHasher /PasswordHasher
 
-RUN chmod +x /init.sh /PasswordHasher
+RUN chmod +x /init.sh
 
 USER mssql
 

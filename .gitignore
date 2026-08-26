@@ -7,11 +7,6 @@
 *.userosscache
 *.sln.docstates
 
-## --- .NET PasswordHasher ---
-docker/database/PasswordHasher/bin/
-docker/database/PasswordHasher/obj/
-docker/database/PasswordHasher/publish/
-
 ## --- Visual Studio & VS Code ---
 .vscode/*
 !.vscode/settings.json

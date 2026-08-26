@@ -11,7 +11,7 @@ COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 show_help() {
     echo -e "Uso: ./scripts/run.sh [OPCION]"
     echo -e "Opciones:"
-    echo -e "  (ninguna)   Inicia SQL Server en Docker, ejecuta la inicializacion + seed de la BD y la app en el host con dotnet run"
+    echo -e "  (ninguna)   Inicia SQL Server en Docker, ejecuta la inicializacion de la BD y la app en el host con dotnet run"
     echo -e "  --full      Levanta el stack completo en Docker (BD + app en contenedor, puerto 8080)"
     echo -e "  --stop      Detiene los contenedores de Docker"
     echo -e "  --logs      Muestra los logs de SQL Server"
@@ -44,7 +44,7 @@ case "$MODE" in
         show_help
         ;;
     --full)
-        echo -e "${GREEN}[+] Levantando el stack completo en Docker (BD + inicialización + app)...${NC}"
+        echo -e "${GREEN}[+] Levantando el stack completo en Docker (BD + app)...${NC}"
         $COMPOSE up -d --build
 
         HTTP_STATUS=$(curl --retry 15 --retry-delay 2 --retry-connrefused \
@@ -64,7 +64,6 @@ case "$MODE" in
         fi
 
         set -a
-
         source .env
         set +a
 
@@ -77,20 +76,11 @@ case "$MODE" in
             exit 1
         fi
 
-        echo "[+] Publicando PasswordHasher..."
-
-        dotnet publish docker/database/PasswordHasher/PasswordHasher.csproj \
-            -c Release \
-            -r linux-x64 \
-            --self-contained true \
-            -p:PublishSingleFile=true \
-            -o docker/database/PasswordHasher/publish
-
-        echo -e "${YELLOW}[+] Construyendo imagen de inicialización de BD (db-init)...${NC}"
+        echo -e "${YELLOW}[+] Construyendo imagen de inicializacion de BD (db-init)...${NC}"
         $COMPOSE build db-init
 
-        echo -e "${YELLOW}[+] Ejecutando inicialización + seed de la base de datos...${NC}"
-        $COMPOSE run --rm db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
+        echo -e "${YELLOW}[+] Ejecutando inicializacion de login/usuario...${NC}"
+        $COMPOSE run --rm db-init || { echo -e "${RED}Error: fallo la inicializacion de la base de datos.${NC}"; exit 1; }
 
         echo -e "${YELLOW}[+] Restaurando paquetes .NET...${NC}"
         dotnet restore ./core/*.csproj
@@ -99,6 +89,8 @@ case "$MODE" in
         ASPNETCORE_ENVIRONMENT="Development" \
         ASPNETCORE_URLS="http://localhost:5000" \
         ConnectionStrings__DefaultConnection="Server=localhost,1433;Database=OpenClientDb;User Id=openclient_user;Password=${MSSQL_APP_PASSWORD};TrustServerCertificate=True;" \
+        ADMIN_EMAIL="${OPENCLIENT_ADMIN_EMAIL}" \
+        ADMIN_PASSWORD="${OPENCLIENT_ADMIN_PASSWORD}" \
             dotnet run --no-launch-profile --project core/openclient.csproj
         ;;
 esac

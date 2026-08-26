@@ -15,6 +15,7 @@ builder.Services.AddDbContext<OpenClientDbContext>(options =>
         builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddScoped<AuthService>();
+builder.Services.AddScoped<DbInitializer>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
@@ -37,6 +38,14 @@ builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var initializer =
+        scope.ServiceProvider.GetRequiredService<DbInitializer>();
+
+    await initializer.InitializeAsync();
+}
 
 if (!app.Environment.IsDevelopment())
 {

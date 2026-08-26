@@ -8,8 +8,8 @@ NC='\033[0m'
 
 echo -e "${GREEN}=== Configurando entorno de desarrollo para open-client ===${NC}"
 
-command -v docker >/dev/null 2>&1 || { echo -e "${RED}Error: Docker no está instalado.${NC}"; exit 1; }
-command -v docker compose >/dev/null 2>&1 || { echo -e "${RED}Error: Docker Compose no está instalado.${NC}"; exit 1; }
+command -v docker >/dev/null 2>&1 || { echo -e "${RED}Error: Docker no esta instalado.${NC}"; exit 1; }
+command -v docker compose >/dev/null 2>&1 || { echo -e "${RED}Error: Docker Compose no esta instalado.${NC}"; exit 1; }
 
 if [ ! -f .env ]; then
     if [ -f .env.example ]; then
@@ -24,7 +24,7 @@ if [ ! -f .env ]; then
         sed -i "s/OPENCLIENT_ADMIN_PASSWORD=.*/OPENCLIENT_ADMIN_PASSWORD=${ADMIN_PASS}/" .env
         echo -e "${GREEN}[✓] Archivo .env generado con claves aleatorias temporales.${NC}"
     else
-        echo -e "${YELLOW}[!] No se encontró .env.example. Creando .env básico...${NC}"
+        echo -e "${YELLOW}[!] No se encontro .env.example. Creando .env basico...${NC}"
         {
             echo "MSSQL_PASSWORD=DevPass_$(openssl rand -hex 6)!"
             echo "MSSQL_APP_PASSWORD=AppPass_$(openssl rand -hex 6)!"
@@ -62,11 +62,11 @@ COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 echo -e "${YELLOW}[+] Levantando SQL Server en Docker...${NC}"
 $COMPOSE up -d sqlserver
 
-echo -e "${YELLOW}[+] Construyendo imagen de inicialización de BD (db-init)...${NC}"
+echo -e "${YELLOW}[+] Construyendo imagen de inicializacion de BD (db-init)...${NC}"
 $COMPOSE build db-init
 
-echo -e "${YELLOW}[+] Ejecutando inicialización + seed de la base de datos...${NC}"
-$COMPOSE run --rm db-init || { echo -e "${RED}Error: falló la inicialización de la base de datos.${NC}"; exit 1; }
+echo -e "${YELLOW}[+] Ejecutando inicializacion de login/usuario...${NC}"
+$COMPOSE run --rm db-init || { echo -e "${RED}Error: fallo la inicializacion de la base de datos.${NC}"; exit 1; }
 
 echo -e "${GREEN}=======================================================${NC}"
 echo -e "${GREEN}¡Entorno de desarrollo listo!${NC}"

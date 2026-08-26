@@ -19,19 +19,19 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
             .HasMaxLength(100);
 
         builder.Property(client => client.LegalName)
-            .HasMaxLength(150);
+            .HasMaxLength(100);
 
         builder.Property(client => client.Industry)
             .HasMaxLength(200);
 
         builder.Property(client => client.FirstName)
-            .HasMaxLength(100);
+            .HasMaxLength(50);
 
         builder.Property(client => client.LastName)
-            .HasMaxLength(150);
+            .HasMaxLength(50);
 
         builder.Property(client => client.JobTitle)
-            .HasMaxLength(100);
+            .HasMaxLength(50);
 
         builder.Property(client => client.TaxId)
             .HasMaxLength(20);
@@ -40,13 +40,13 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
             .HasMaxLength(20);
 
         builder.Property(client => client.Email)
-            .HasMaxLength(320);
+            .HasMaxLength(400);
 
         builder.Property(client => client.Website)
             .HasMaxLength(500);
 
         builder.Property(client => client.Address)
-            .HasMaxLength(300);
+            .HasMaxLength(500);
 
         builder.Property(client => client.District)
             .HasMaxLength(100);

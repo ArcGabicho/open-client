@@ -12,6 +12,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
 
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.Id)
+            .ValueGeneratedOnAdd();
+
         builder.Property(x => x.Email)
             .HasMaxLength(255)
             .IsRequired();
@@ -27,10 +30,24 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(50)
             .IsRequired();
 
-        builder.Property(x => x.IsActive)
+        builder.Property(x => x.FirstName)
+            .HasMaxLength(50)
             .IsRequired();
 
+        builder.Property(x => x.LastName)
+            .HasMaxLength(50)
+            .IsRequired();
+
+        builder.Property(x => x.ProfileImage)
+            .HasMaxLength(int.MaxValue)
+            .IsRequired();
+
+        builder.Property(x => x.IsActive)
+            .IsRequired()
+            .HasDefaultValue(true);
+
         builder.Property(x => x.CreatedAt)
+            .IsRequired()
             .HasDefaultValueSql("GETUTCDATE()");
     }
 }

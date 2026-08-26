@@ -7,20 +7,14 @@ docker/
 ├── docker-compose.yml        # Infraestructura completa (BD + inicializacion + app)
 ├── Dockerfile                # Multi-stage build de la app (produccion)
 └── database/
-    ├── Dockerfile            # Contenedor de inicializacion de la BD
+    ├── Dockerfile            # Contenedor de inicializacion (login/usuario SQL Server)
     ├── init.sh               # Script de arranque del init-container
-    ├── init.sql              # DDL idempotente (DB, login, usuario, rol)
-    ├── admin.sql             # Plantilla idempotente del administrador (dbo.Users)
-    ├── seed.sql              # Dataset inicial de clientes (~4040 filas)
-    └── PasswordHasher/       # Utilidad self-contained: password -> hash BCrypt
-        ├── PasswordHasher.csproj
-        ├── Program.cs
-        └── publish/          # Salida del publish (no se versiona)
+    └── init.sql              # DDL: login, usuario, rol (infraestructura SQL Server)
 ```
 
 ---
 
-## 1. `docker/Dockerfile` — Multi-stage Build (App)
+## 1. `docker/Dockerfile` -- Multi-stage Build (App)
 
 Imagen multi-stage con 2 stages para produccion. Basada en .NET 10.0.
 
@@ -35,8 +29,6 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 - Restaura dependencias desde los archivos `.csproj`.
 - Compila y publica la aplicacion con `dotnet publish -c Release -o /app/publish`.
 
----
-
 #### `final` (Runtime ligero)
 
 ```dockerfile
@@ -48,106 +40,61 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 - Expone el puerto `8080`.
 - Ejecuta `dotnet openclient.dll` como punto de entrada.
 
----
-
-### Diagrama de dependencias
-
-```
-sdk:10.0 (build)
-└── aspnet:10.0 (final → imagen ligera de produccion)
-```
-
 ### Build manual
 
 ```bash
-# Build de produccion
 docker build -t openclient-app -f docker/Dockerfile .
 ```
 
-> **Nota:** El entorno de desarrollo se ejecuta directamente en el host con `dotnet run` / `dotnet watch`, no dentro de Docker. Esto elimina las colisiones de permisos (MSB3491 / root) y mejora la experiencia del IDE.
-
 ---
 
-## 2. `docker/database/` — Inicializacion de la Base de Datos
+## 2. `docker/database/` -- Inicializacion SQL Server
 
-Contenedor one-shot que prepara SQL Server para la aplicacion: crea la estructura y carga el seed. Termina con exit code 0 unicamente si todo fue correcto (usa `sqlcmd -b`, los errores SQL abortan el proceso).
+Contenedor one-shot que prepara SQL Server: crea el login, usuario y rol
+necesarios para que la aplicacion .NET pueda conectarse.
+
+> La logica de negocio (migraciones, admin, seed) la gestiona la aplicacion
+> via `DbInitializer` en C#, no estos scripts.
 
 ### `database/Dockerfile`
 
-- Basado en la imagen oficial `mssql/server:2022-latest` (incluye `sqlcmd`, no incluye .NET).
-- Copia `init.sh`, `init.sql`, `admin.sql`, `seed.sql` y el binario
-  `PasswordHasher/publish/PasswordHasher` dentro de la imagen.
-- El binario se publica **self-contained linux-x64 single-file** (ver
-  [database.md](database.md)): un unico ejecutable sin dependencias, por eso se
-  copia solo ese archivo y se ejecuta como `/PasswordHasher`.
-
-> **Importante:** Compose no reconstruye imagenes automaticamente. Los scripts ejecutan `build db-init` antes de cada corrida para garantizar que `/seed.sql` este presente y actualizado.
+- Basado en la imagen oficial `mssql/server:2022-latest` (incluye `sqlcmd`).
+- Copia `init.sh` y `init.sql`.
+- Ejecuta `init.sh` como ENTRYPOINT.
 
 ### `database/init.sh`
 
 Flujo de inicializacion:
 
 1. Espera a que SQL Server responda (`sqlcmd SELECT 1` en bucle).
-2. Sustituye el placeholder `__MSSQL_APP_PASSWORD__` en `init.sql` por el valor real (sustitucion literal en bash, sin sed).
-3. Ejecuta `init.sql` con `-b` (errores SQL → exit code distinto de 0).
-4. Valida `OPENCLIENT_ADMIN_EMAIL` y `OPENCLIENT_ADMIN_PASSWORD` (vienen del `.env` via compose).
-5. Ejecuta `/PasswordHasher`: genera el hash BCrypt del administrador leyendo la contraseña desde el entorno (nunca argv ni archivos).
-6. Genera `/tmp/admin.sql` sustituyendo `__ADMIN_EMAIL__` y `__ADMIN_PASSWORD_HASH__` y lo ejecuta con sqlcmd (INSERT idempotente en `dbo.Users`).
-7. Consulta `COUNT(*)` de `dbo.Clients`.
-8. Si ya hay registros: **omite el seed** (idempotente, nunca duplica datos).
-9. Si esta vacia: ejecuta `seed.sql` envuelto en una **transaccion atomica** (`SET XACT_ABORT ON` + `BEGIN TRANSACTION` + `COMMIT`). Si cualquier lote falla, el cierre de conexion hace rollback total y no quedan filas parciales.
-10. Verifica post-condicion: si el seed no inserto registros → exit 1.
-11. Imprime claramente el total final: `Registros en dbo.Clients: N`.
-
-Todas las llamadas usan `-f 65001` para preservar los caracteres UTF-8 del dataset. Los archivos temporales `/tmp/*.sql` se eliminan con `trap ... EXIT INT TERM`. Ni el password ni el hash se imprimen jamas.
-
-Detalles completos del flujo: [database.md](database.md).
+2. Sustituye el placeholder `__MSSQL_APP_PASSWORD__` en `init.sql`.
+3. Ejecuta `init.sql` con `-b` (errores SQL -> exit code distinto de 0).
+4. Limpia temporales via `trap`.
+5. Termina con exit 0.
 
 ### `database/init.sql`
 
-Script **idempotente** (se puede re-ejecutar sin errores):
+Script idempotente (se puede re-ejecutar sin errores):
 
 | Objeto                    | Tipo   | Proposito                                        |
 |---------------------------|--------|--------------------------------------------------|
-| `OpenClientDb`            | DB     | Base de datos principal                          |
 | `openclient_user`         | LOGIN  | Login de SQL Server para la app                  |
+| `OpenClientDb`            | DB     | Base de datos principal (si no existe)           |
 | `openclient_user`         | USER   | Usuario mapeado en `OpenClientDb`                |
 | `openclient_runtime`      | ROLE   | Rol de ejecucion al que pertenece el usuario     |
-| `dbo.Users`               | TABLE  | Usuarios de la app (admin inicial + futuros)     |
-| `dbo.Clients`             | TABLE  | Tabla principal (columnas alineadas al modelo EF `Client.cs`) |
+| (membria)                 | ROLE   | Agrega usuario al rol                            |
 
-La contraseña del login se inyecta via variable de entorno `MSSQL_APP_PASSWORD` (nunca se guarda en el repositorio).
-
-### `database/admin.sql`
-
-Plantilla idempotente del administrador. Contiene los placeholders
-`__ADMIN_EMAIL__` y `__ADMIN_PASSWORD_HASH__`, sustituidos en memoria por
-`init.sh` durante la inicializacion; el resultado se escribe solo en `/tmp`
-del contenedor y se elimina al terminar. El hash lo genera `/PasswordHasher`
-(BCrypt, work factor 12) a partir de `OPENCLIENT_ADMIN_PASSWORD`. La tabla
-`dbo.Users` se crea aqui si no existe y se otorga `SELECT` al rol
-`openclient_runtime`.
-
-### `database/seed.sql`
-
-Dataset inicial (~4040 clientes peruanos) en 9 lotes `INSERT ... GO`. El script genera el contenido; no debe editarse a mano. Su ejecucion esta protegida por el guard de idempotencia descrito arriba.
-
-**Reiniciar la base de datos desde cero** (borra TODOS los datos):
-
-```bash
-docker compose --env-file .env -f docker/docker-compose.yml down -v
-./scripts/run.sh
-```
+La contrasena del login se inyecta via variable de entorno `MSSQL_APP_PASSWORD`.
 
 ---
 
-## 3. `docker/docker-compose.yml` — Infraestructura
+## 3. `docker/docker-compose.yml` -- Infraestructura
 
 Define tres servicios encadenados por dependencias.
 
 ### Servicios
 
-#### `sqlserver` — Base de datos
+#### `sqlserver` -- Base de datos
 
 | Propiedad        | Valor                                         |
 |------------------|-----------------------------------------------|
@@ -156,21 +103,11 @@ Define tres servicios encadenados por dependencias.
 | Puerto           | `1433:1433`                                   |
 | Volumen          | `openclient_data:/var/opt/mssql`              |
 
-**Variables de entorno:**
-
-| Variable             | Valor                 | Descripcion                      |
-|----------------------|-----------------------|----------------------------------|
-| `ACCEPT_EULA`        | `Y`                   | Acepta la licencia de SQL Server |
-| `MSSQL_SA_PASSWORD`  | `${MSSQL_PASSWORD}`   | Contraseña del SA (desde `.env`) |
-
-**Healthcheck:**
-
-- Ejecuta `SELECT 1` cada 10 segundos con `sqlcmd`.
-- Timeout de 5 segundos, hasta 10 reintentos, periodo inicial de gracia de 20s.
+**Healthcheck:** `SELECT 1` cada 10s, timeout 5s, 10 reintentos, 20s de gracia.
 
 ---
 
-#### `db-init` — Inicializador de la BD (one-shot)
+#### `db-init` -- Inicializador SQL Server (one-shot)
 
 | Propiedad      | Valor                              |
 |----------------|------------------------------------|
@@ -180,18 +117,16 @@ Define tres servicios encadenados por dependencias.
 
 **Variables de entorno:**
 
-| Variable                   | Valor                          | Descripcion                                            |
-|----------------------------|--------------------------------|--------------------------------------------------------|
-| `MSSQL_PASSWORD`           | `${MSSQL_PASSWORD}`            | Contraseña SA para conectar con sqlcmd                 |
-| `MSSQL_APP_PASSWORD`       | `${MSSQL_APP_PASSWORD}`        | Contraseña para crear el login `openclient_user`       |
-| `OPENCLIENT_ADMIN_EMAIL`   | `${OPENCLIENT_ADMIN_EMAIL}`    | Email del administrador inicial (`dbo.Users`)          |
-| `OPENCLIENT_ADMIN_PASSWORD`| `${OPENCLIENT_ADMIN_PASSWORD}` | Password del admin; se guarda como hash BCrypt         |
+| Variable             | Valor                   | Descripcion                                    |
+|----------------------|-------------------------|------------------------------------------------|
+| `MSSQL_PASSWORD`     | `${MSSQL_PASSWORD}`     | Contrasena SA para conectar con sqlcmd         |
+| `MSSQL_APP_PASSWORD` | `${MSSQL_APP_PASSWORD}` | Contrasena para crear el login openclient_user |
 
 **Dependencia:** arranca solo cuando `sqlserver` esta `healthy`.
 
 ---
 
-#### `openclient` — App Blazor + API REST
+#### `openclient` -- App Blazor + API REST
 
 | Propiedad      | Valor                                  |
 |----------------|----------------------------------------|
@@ -205,8 +140,10 @@ Define tres servicios encadenados por dependencias.
 |----------------------------------------|----------------------------------------------------------|
 | `ASPNETCORE_ENVIRONMENT`               | `Development`                                            |
 | `ConnectionStrings__DefaultConnection` | Conecta a `sqlserver:1433` con el usuario `openclient_user` |
+| `ADMIN_EMAIL`                          | `${OPENCLIENT_ADMIN_EMAIL}`                              |
+| `ADMIN_PASSWORD`                       | `${OPENCLIENT_ADMIN_PASSWORD}`                           |
 
-**Dependencia:** arranca solo cuando `db-init` termino con exito (`service_completed_successfully`).
+**Dependencia:** arranca solo cuando `db-init` termino con exito.
 
 ---
 
@@ -214,13 +151,18 @@ Define tres servicios encadenados por dependencias.
 
 ```
 sqlserver (healthy)
-    ↓ depends_on: service_healthy
-db-init (exit 0 = estructura + seed verificados)
-    ↓ depends_on: service_completed_successfully
+    | depends_on: service_healthy
+db-init (exit 0 = login/usuario/rol creados)
+    | depends_on: service_completed_successfully
 openclient (puerto 8080)
+    |
+    |-- DbInitializer ejecuta:
+    |   1. Database.MigrateAsync()
+    |   2. SeedAdminAsync()
+    |   3. SeedClientsAsync()
+    v
+Aplicacion lista
 ```
-
-En modo desarrollo (`run.sh` / `dev.sh`), `db-init` se ejecuta con `docker compose run --rm db-init`: corre en primer plano, muestra su salida en vivo y propaga el exit code real. En modo `--full`, Compose lo orquesta via `depends_on` dentro del stack.
 
 ---
 
@@ -237,53 +179,28 @@ En modo desarrollo (`run.sh` / `dev.sh`), `db-init` se ejecuta con `docker compo
 ```bash
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
-# Arrancar solo SQL Server (la inicializacion la manejan los scripts)
-$COMPOSE up -d sqlserver
-
-# Ejecutar inicializacion + seed manualmente (primer plano, exit code real)
-$COMPOSE run --rm db-init
-
-# Arrancar todo el stack (BD + app en contenedor)
-$COMPOSE up -d --build
-
-# Detener el stack
-$COMPOSE down
-
-# Detener y eliminar volumenes (borra datos; reinicia la BD desde cero)
-$COMPOSE down -v
-
-# Ver logs
-$COMPOSE logs -f sqlserver
-$COMPOSE logs -f openclient
-```
-
-### Verificar el estado del seed
-
-```bash
-source .env
-docker exec openclient-database /opt/mssql-tools18/bin/sqlcmd \
-    -S localhost -U sa -P "$MSSQL_PASSWORD" -C \
-    -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM OpenClientDb.dbo.Clients;"
+$COMPOSE up -d sqlserver       # Solo SQL Server
+$COMPOSE run --rm db-init      # Inicializar login/usuario
+$COMPOSE up -d --build         # Stack completo
+$COMPOSE down                  # Detener
+$COMPOSE down -v               # Detener y borrar datos
+$COMPOSE logs -f sqlserver     # Ver logs
 ```
 
 ---
 
-## Arquitectura de desarrollo vs produccion
+## 4. Arquitectura de desarrollo vs produccion
 
 ### Desarrollo (app en el host)
 
 ```
 Host:
   dotnet run / dotnet watch (puerto 5000)
-      ↓ se conecta vía localhost:1433
+      | se conecta via localhost:1433
 Docker:
   sqlserver (puerto 1433)
-  db-init (one-shot, crea BD y usuario)
+  db-init (one-shot, crea login/usuario)
 ```
-
-- La app se ejecuta directamente en el host; la infraestructura vive en Docker.
-- La cadena `sqlserver → db-init` garantiza que `OpenClientDb` y `openclient_user` existan antes de arrancar la app.
-- Sin colisiones de permisos: el SDK y los artefactos de compilacion (`bin/`, `obj/`) pertenecen al usuario local.
 
 ### Produccion (todo en Docker)
 
@@ -291,15 +208,12 @@ Docker:
 Docker:
   sqlserver (puerto 1433)
   db-init (one-shot)
-  openclient (puerto 8080) → imagen multi-stage ligera
+  openclient (puerto 8080) -> imagen multi-stage ligera
 ```
-
-- Tanto la BD como la app se ejecutan en Docker.
-- La app se conecta al host `sqlserver` (red interna de compose), no a `localhost`.
 
 ---
 
-## Resumen de puertos
+## 5. Resumen de puertos
 
 | Puerto | Servicio             | Modo       |
 |--------|----------------------|------------|
@@ -309,15 +223,14 @@ Docker:
 
 ---
 
-## Archivo `.env` requerido
-
-El `docker-compose.yml` lee las variables desde un archivo `.env` en la raiz del proyecto:
+## 6. Archivo `.env` requerido
 
 ```
-MSSQL_PASSWORD=ProdPass_abc123def456!        # Contraseña del SA
-MSSQL_APP_PASSWORD=AppPass_xyz789!           # Contraseña de openclient_user
+MSSQL_PASSWORD=ProdPass_abc123def456!
+MSSQL_APP_PASSWORD=AppPass_xyz789!
 OPENCLIENT_ADMIN_EMAIL=admin@openclient.local
-OPENCLIENT_ADMIN_PASSWORD=SuperPassword123!  # Se almacena como hash BCrypt
+OPENCLIENT_ADMIN_PASSWORD=SuperPassword123!
 ```
 
-Los scripts `setup.sh` y `dev.sh` generan este archivo automaticamente con contraseñas aleatorias. Detalle completo del flujo de inicializacion: [database-guide.md](database-guide.md).
+Los scripts `setup.sh` y `dev.sh` generan este archivo automaticamente.
+Detalle completo: [database-guide.md](database-guide.md).

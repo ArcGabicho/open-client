@@ -1,8 +1,7 @@
-# Guía de Desarrollo
+# Guia de Desarrollo
 
-Entorno local de Open Client: requisitos, arranque, estructura y verificación
-de cambios. Para detalles de autenticación e inicialización de BD, ver
-`authentication.md` y `database-initialization.md`.
+Entorno local de Open Client: requisitos, arranque, estructura y verificacion
+de cambios.
 
 ---
 
@@ -16,20 +15,24 @@ de cambios. Para detalles de autenticación e inicialización de BD, ver
 
 ```bash
 cp .env.example .env        # primera vez; luego edita los valores reales
-./scripts/run.sh            # SQL Server (Docker) + init/seed + app en :5000
+./scripts/run.sh            # SQL Server (Docker) + init + app en :5000
 ```
 
 `run.sh` hace, en orden:
 
 1. verifica que `.env` existe y lo exporta al entorno,
 2. levanta `sqlserver` (healthcheck `SELECT 1`),
-3. comprueba que el puerto 5000 está libre,
-4. publica `PasswordHasher` (single-file self-contained linux-x64),
-5. construye la imagen `db-init` y ejecuta la inicialización
-   (idempotente — ver `database-initialization.md`),
-6. restaura paquetes y lanza la app con
-   `ASPNETCORE_ENVIRONMENT=Development`, `ASPNETCORE_URLS=http://localhost:5000`
-   y la cadena de conexión **por variable de entorno**.
+3. comprueba que el puerto 5000 esta libre,
+4. construye la imagen `db-init` y ejecuta la inicializacion
+   (login/usuario de SQL Server),
+5. restaura paquetes y lanza la app con
+   `ASPNETCORE_ENVIRONMENT=Development`, `ASPNETCORE_URLS=http://localhost:5000`,
+   la cadena de conexion y las variables `ADMIN_EMAIL`/`ADMIN_PASSWORD`
+   **por variable de entorno**.
+6. La app ejecuta `DbInitializer` al iniciar:
+   - `Database.MigrateAsync()` -> crea/esquema via EF Core
+   - `SeedAdminAsync()` -> crea admin con BCrypt si no existe
+   - `SeedClientsAsync()` -> inserta ~4018 clientes desde `ClientSeedData.cs` si tabla vacia
 
 Otros modos:
 
@@ -42,54 +45,81 @@ Otros modos:
 La app queda disponible en <http://localhost:5000>. Login con las credenciales
 del `.env` (`OPENCLIENT_ADMIN_EMAIL` / `OPENCLIENT_ADMIN_PASSWORD`).
 
-## 3. Estructura relevante a autenticación
+## 3. Estructura del proyecto
 
-| Archivo | Rol |
-|---|---|
-| `core/Program.cs` | Cookie Authentication, authorization, antiforgery, pipeline |
-| `core/Controllers/AuthController.cs` | `POST /auth/log-in`, `GET /auth/log-out` |
-| `core/Services/AuthService.cs` | búsqueda de usuario + BCrypt + claims + logging |
-| `core/Components/Pages/Login.razor` | formulario SSR estático con antiforgery |
-| `core/Components/Pages/Dashboard.razor` | `[Authorize]` + logout por navegación forzada |
-| `core/Components/Pages/AccessDenied.razor` | página de acceso denegado |
-| `docker/database/init.sh` | validación de credenciales admin + hash BCrypt |
-| `docker/database/PasswordHasher/` | generador de hashes BCrypt |
+```
+core/
+├── Data/
+│   ├── OpenClientDbContext.cs       # DbContext con DbSet<Client> y DbSet<User>
+│   ├── DbInitializer.cs             # Migraciones + admin + seed
+│   ├── DbSeeder.cs                  # Seed de clientes via EF Core
+│   ├── ClientConfiguration.cs       # Fluent API para Client
+│   ├── UserConfiguration.cs         # Fluent API para User
+│   ├── SeedData/
+│   │   └── ClientSeedData.cs        # ~4018 registros de clientes (C#)
+│   └── Migrations/                  # Migraciones EF Core
+├── Models/
+│   ├── Domain/
+│   │   ├── Client.cs
+│   │   └── User.cs
+│   └── DTO/
+│       └── LoginModel.cs
+├── Services/
+│   └── AuthService.cs               # BCrypt.Verify + claims
+├── Controllers/
+│   └── AuthController.cs            # POST /auth/log-in, GET /auth/log-out
+├── Components/                      # Blazor components
+├── Program.cs                       # Entrypoint + DbInitializer
+└── openclient.csproj
+```
 
-## 4. Reglas del proyecto
+## 4. EF Core Migrations
 
-* **Secretos**: solo en `.env` (fuera de Git). Las cadenas de conexión llegan
-  por variables de entorno — no hardcodearlas en `appsettings*.json`.
-* **Render modes**: SSR estático por defecto; interactividad opt-in por página
+Para crear una nueva migracion:
+
+```bash
+export PATH="$PATH:$HOME/.dotnet/tools"
+dotnet ef migrations add NombreMigracion --project core/openclient.csproj --output-dir Data/Migrations
+```
+
+Para aplicar manualmente (normalmente la app lo hace automaticamente):
+
+```bash
+dotnet ef database update --project core/openclient.csproj
+```
+
+La aplicacion ejecuta `Database.MigrateAsync()` al iniciar via `DbInitializer`.
+
+**Nunca usar `EnsureCreated()`**. Siempre usar migraciones.
+
+## 5. Reglas del proyecto
+
+* **Secretos**: solo en `.env` (fuera de Git). Las cadenas de conexion llegan
+  por variables de entorno -- no hardcodearlas en `appsettings*.json`.
+* **Render modes**: SSR estatico por defecto; interactividad opt-in por pagina
   (`@rendermode InteractiveServer`). No volver a un modo global interactivo.
-* **Autenticación**: un único mecanismo (formularios HTTP + cookies). No usar
+* **Autenticacion**: un unico mecanismo (formularios HTTP + cookies). No usar
   JS interop ni `fetch` para login/logout.
-* **Logging**: eventos de autenticación vía `ILogger`; nunca registrar
-  contraseñas, hashes, cookies ni secretos.
-* **Errores**: capturar y registrar la excepción real (`ILogger.LogError`);
-  mostrar al usuario mensajes genéricos.
+* **Logging**: eventos de autenticacion via `ILogger`; nunca registrar
+  contrasenas, hashes, cookies ni secretos.
+* **Errores**: capturar y registrar la excepcion real (`ILogger.LogError`);
+  mostrar al usuario mensajes genericos.
+* **Base de datos**: todo el schema y seed se gestiona via EF Core.
+  No usar T-SQL de negocio en Docker.
 
-## 5. Verificación antes de commit
+## 6. Verificacion antes de commit
 
 ```bash
 dotnet build core/openclient.csproj
-dotnet build docker/database/PasswordHasher/PasswordHasher.csproj
-./scripts/run.sh          # segunda ejecución debe ser idempotente
+./scripts/run.sh          # segunda ejecucion debe ser idempotente
 ```
 
-Checklist funcional mínimo:
+Checklist funcional minimo:
 
 - [ ] `/log-in` carga sin errores de consola (sin circuito Blazor)
-- [ ] login incorrecto muestra mensaje genérico
+- [ ] login incorrecto muestra mensaje generico
 - [ ] login correcto llega a `/dashboard`
-- [ ] `/dashboard` anónimo redirige a `/log-in?ReturnUrl=%2Fdashboard`
+- [ ] `/dashboard` anonimo redirige a `/log-in?ReturnUrl=%2Fdashboard`
 - [ ] logout lleva a `/log-in` sin errores de WebSocket
 - [ ] tras logout, `/dashboard` vuelve a exigir login
-- [ ] segunda ejecución de `run.sh`: 1 admin, 4040 clientes, sin duplicados
-
-## 6. Problemas conocidos resueltos (referencia)
-
-Ver la tabla de causas raíz en `docs/authentication.md` §1: errores de
-antiforgery en el login (400), `Invalid salt version` de BCrypt, y
-`WebSocket is not in the OPEN state` en logout. Ninguno debe reaparecer; si
-lo hacen, revisar primero que no se reintrodujo JS interop o render global
-interactivo.
+- [ ] segunda ejecucion de `run.sh`: 1 admin, ~4018 clientes, sin duplicados

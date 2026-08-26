@@ -1,16 +1,3 @@
-IF DB_ID(N'OpenClientDb') IS NULL
-BEGIN
-    PRINT 'Creando OpenClientDb...';
-
-    CREATE DATABASE [OpenClientDb];
-END
-ELSE
-BEGIN
-    PRINT 'OpenClientDb ya existe';
-END
-GO
-
-
 IF NOT EXISTS
 (
     SELECT 1
@@ -27,7 +14,20 @@ BEGIN
 END
 ELSE
 BEGIN
-    PRINT 'El USUARIO openclient_user ya existe.';
+    PRINT 'El LOGIN openclient_user ya existe.';
+END
+GO
+
+
+IF DB_ID(N'OpenClientDb') IS NULL
+BEGIN
+    PRINT 'Creando OpenClientDb...';
+
+    CREATE DATABASE [OpenClientDb];
+END
+ELSE
+BEGIN
+    PRINT 'OpenClientDb ya existe.';
 END
 GO
 
@@ -50,7 +50,7 @@ BEGIN
 END
 ELSE
 BEGIN
-    PRINT 'El usuario openclient_user ya existe';
+    PRINT 'El USUARIO openclient_user ya existe.';
 END
 GO
 

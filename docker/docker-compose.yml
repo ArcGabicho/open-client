@@ -28,8 +28,6 @@ services:
     environment:
       MSSQL_PASSWORD: ${MSSQL_PASSWORD}
       MSSQL_APP_PASSWORD: ${MSSQL_APP_PASSWORD}
-      OPENCLIENT_ADMIN_EMAIL: ${OPENCLIENT_ADMIN_EMAIL}
-      OPENCLIENT_ADMIN_PASSWORD: ${OPENCLIENT_ADMIN_PASSWORD}
     depends_on:
       sqlserver:
         condition: service_healthy
@@ -43,6 +41,8 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Server=sqlserver,1433;Database=OpenClientDb;User Id=openclient_user;Password=${MSSQL_APP_PASSWORD};TrustServerCertificate=True;"
+      ADMIN_EMAIL: ${OPENCLIENT_ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${OPENCLIENT_ADMIN_PASSWORD}
     ports:
       - "8080:8080"
     depends_on:

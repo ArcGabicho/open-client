@@ -10,7 +10,7 @@ REPO_URL="https://github.com/ArcGabicho/open-client.git"
 TARGET_DIR="$HOME/open-client"
 BRANCH="master"
 
-echo -e "${GREEN}=== Instalación automática One-Liner de open-client ===${NC}"
+echo -e "${GREEN}=== Instalacion automatica One-Liner de open-client ===${NC}"
 
 echo -e "${YELLOW}[+] Verificando utilidades del sistema (git, curl, docker)...${NC}"
 
@@ -35,7 +35,7 @@ install_dependencies() {
                 sudo systemctl enable --now docker
                 ;;
             *)
-                echo -e "${RED}[!] Distribución no soportada automáticamente: $ID.${NC}"
+                echo -e "${RED}[!] Distribucion no soportada automaticamente: $ID.${NC}"
                 echo -e "Por favor, instala git, curl y docker manualmente."
                 exit 1
                 ;;
@@ -48,13 +48,13 @@ if ! command -v git &> /dev/null || ! command -v docker &> /dev/null || ! comman
 fi
 
 if ! groups | grep -q docker; then
-    echo -e "${YELLOW}[+] Añadiendo usuario al grupo docker...${NC}"
+    echo -e "${YELLOW}[+] Anadiendo usuario al grupo docker...${NC}"
     sudo usermod -aG docker $USER || true
 fi
 
 if [ "$(pwd)" != "$TARGET_DIR" ]; then
     if [ -d "$TARGET_DIR" ]; then
-        echo -e "${YELLOW}[+] El directorio ya existe. Actualizando código...${NC}"
+        echo -e "${YELLOW}[+] El directorio ya existe. Actualizando codigo...${NC}"
         cd "$TARGET_DIR"
         git fetch origin
         git checkout $BRANCH
@@ -67,7 +67,7 @@ if [ "$(pwd)" != "$TARGET_DIR" ]; then
 fi
 
 if [ ! -f .env ]; then
-    echo -e "${YELLOW}[+] Generando credenciales seguras para Producción...${NC}"
+    echo -e "${YELLOW}[+] Generando credenciales seguras para Produccion...${NC}"
     PROD_PASS="ProdPass_$(openssl rand -hex 12)!"
     PROD_APP_PASS="AppPass_$(openssl rand -hex 12)!"
     PROD_ADMIN_PASS="AdminPass_$(openssl rand -hex 12)!"
@@ -78,7 +78,7 @@ MSSQL_APP_PASSWORD=${PROD_APP_PASS}
 OPENCLIENT_ADMIN_EMAIL=admin@openclient.local
 OPENCLIENT_ADMIN_PASSWORD=${PROD_ADMIN_PASS}
 EOF
-    echo -e "${GREEN}[✓] Contraseñas de producción (SA, usuario de app y admin) generadas en .env de forma segura.${NC}"
+    echo -e "${GREEN}[✓] Contrasenas de produccion (SA, usuario de app y admin) generadas en .env de forma segura.${NC}"
 fi
 
 chmod +x scripts/*.sh
@@ -88,5 +88,5 @@ echo -e "${YELLOW}[+] Desplegando stack con Docker Compose...${NC}"
 echo -e "${GREEN}=======================================================${NC}"
 echo -e "${GREEN}¡open-client ha sido desplegado exitosamente!${NC}"
 echo -e "Directorio: ${YELLOW}$TARGET_DIR${NC}"
-echo -e "Recuerda respaldar la contraseña generada en tu archivo ${YELLOW}.env${NC}"
+echo -e "Recuerda respaldar la contrasena generada en tu archivo ${YELLOW}.env${NC}"
 echo -e "${GREEN}=======================================================${NC}"

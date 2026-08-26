@@ -36,9 +36,9 @@ open-client/
 │   ├── docker-compose.yml      # Infraestructura completa (SQL Server + inicializacion + app)
 │   ├── Dockerfile              # Multi-stage Dockerfile de la app (solo produccion)
 │   └── database/
-│       ├── Dockerfile          # Contenedor one-shot de inicializacion
-│       ├── init.sh             # Espera a SQL Server e inyecta credenciales
-│       └── init.sql            # DDL idempotente (OpenClientDb, openclient_user, rol runtime)
+│       ├── Dockerfile          # Contenedor one-shot de inicializacion (login/usuario)
+│       ├── init.sh             # Espera a SQL Server y ejecuta init.sql
+│       └── init.sql            # DDL: login, usuario, rol (infraestructura SQL Server)
 ├── docs/                       # Guias de arquitectura y despliegue
 ├── scripts/
 │   ├── clear.sh                # Limpia artefactos y contenedores
@@ -89,7 +89,7 @@ Puedes conectarte al contenedor de la base de datos usando Azure Data Studio, DB
 | Contrasena (admin) | Valor de `MSSQL_PASSWORD` en `.env` |
 | Trust Server Certificate | True |
 
-El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `openclient_runtime` se crean automaticamente al arrancar el servicio `db-init` del Docker Compose. El mismo servicio crea la tabla `dbo.Users` y siembra el administrador inicial (email de `OPENCLIENT_ADMIN_EMAIL`, hash BCrypt generado por `PasswordHasher` a partir de `OPENCLIENT_ADMIN_PASSWORD`). Detalles: [database.md](database.md).
+El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `openclient_runtime` se crean automaticamente al arrancar el servicio `db-init` del Docker Compose. La aplicacion (.NET/EF Core) ejecuta `DbInitializer` al iniciar, que aplica las migraciones, crea el administrador inicial con BCrypt (email de `ADMIN_EMAIL`, hash generado en C#) y ejecuta el seed de clientes desde `core/Data/SeedData/ClientSeedData.cs`. Detalles: [database.md](database.md).
 
 ## Variables de Entorno
 
@@ -103,3 +103,27 @@ El usuario `openclient_user`, su login, la base `OpenClientDb` y el rol `opencli
 | OPENCLIENT_ADMIN_PASSWORD | Contrasena del administrador; se almacena como hash BCrypt | Definida en `.env` |
 
 Consulta la plantilla completa en `.env.example`.
+
+## ☁️ Despliegue en Producción & CI/CD
+
+### Despliegue Local en Producción con Docker Compose
+
+Para empaquetar y levantar la versión ligera de producción compilada:
+
+```bash
+cd docker
+docker compose --profile prod up app-prod --build -d
+```
+
+### CI/CD en Azure mediante GitHub Actions
+
+El repositorio está configurado para realizar compilaciones e integraciones continuas. Al hacer un push a la rama `main` o `develop`, GitHub Actions compila la imagen Docker y la despliega automáticamente en Azure Container Registry (ACR) y Azure Container Apps:
+
+Agrega las siguientes credenciales en los Secrets de GitHub (Settings > Secrets and variables > Actions):
+
+- **AZURE_CREDENTIALS**: JSON del Service Principal de Azure.
+- **REGISTRY_LOGIN_SERVER**: tusitio.azurecr.io
+- **REGISTRY_USERNAME**: Usuario de ACR.
+- **REGISTRY_PASSWORD**: Clave de ACR.
+
+El flujo `.github/workflows/deploy.yml` ejecutará la compilación multi-stage y el push automáticamente a tu infraestructura en la nube.

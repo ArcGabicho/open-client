@@ -40,7 +40,7 @@ Principios aplicados:
 | Problema anterior | Causa raíz | Solución actual |
 |---|---|---|
 | `POST /api/auth/log-in → 400` / "A valid antiforgery token was not provided" | `Login.razor` llamaba a `auth.js` (JS interop) que hacía `fetch` sin token antiforgery | Formulario HTML nativo con `<AntiforgeryToken />`; validación explícita con `IAntiforgery` |
-| `BCrypt.Net.SaltParseException: Invalid salt version` | Se verificaban hashes que no eran BCrypt | `PasswordHasher` genera `$2a$12$…`; `init.sh` valida formato antes de insertar; `AuthService` captura la excepción y rechaza el acceso sin tumbar el endpoint |
+| `BCrypt.Net.SaltParseException: Invalid salt version` | Se verificaban hashes que no eran BCrypt | `DbInitializer` genera hashes con `BCrypt.Net.BCrypt.HashPassword(password, 12)`; `AuthService` captura la excepcion y rechaza el acceso sin tumbar el endpoint |
 | `WebSocket is not in the OPEN state` al hacer logout | Logout dentro del circuito (fetch + `window.location`) mataba el WebSocket mientras el circuito intentaba seguir ejecutando JS | Logout por navegación HTTP forzada fuera del circuito |
 | Dos sistemas de autenticación simultáneos (`auth.js` + API) | Diseño híbrido innecesario | `auth.js` eliminado; un solo flujo nativo |
 
@@ -184,7 +184,7 @@ Los mensajes al usuario son genéricos y no exponen detalles internos.
 |---|---|---|
 | `form_expired` al enviar el login | Token antiforgery viejo (página abierta mucho tiempo, cookie de antiforgery eliminada, o token emitido a otra identidad) | Recargar `/log-in` |
 | Login correcto pero `/dashboard` vuelve a `/log-in` | Cookie no persistida o reloj del sistema desfasado | Verificar cookies del navegador y hora del equipo |
-| `Invalid salt version` (ya no debe ocurrir) | Hash no-BCrypt en `dbo.Users` | Regenerar con `PasswordHasher`; `init.sh` ahora valida el formato |
+| `Invalid salt version` (ya no debe ocurrir) | Hash no-BCrypt en `dbo.Users` | Verificar que el hash fue generado por `DbInitializer` con BCrypt. Recrear el admin si es necesario. |
 | `WebSocket is not in the OPEN state` (ya no debe ocurrir) | Interop JS tras cerrar el circuito | El logout usa navegación forzada; no reintroducir llamadas JS post-navegación |
 | `500 ValidateAntiforgeryTokenAuthorizationFilter` | Uso de `[ValidateAntiForgeryToken]` sin MVC ViewFeatures | Usar `IAntiforgery` (implementación actual) |
 

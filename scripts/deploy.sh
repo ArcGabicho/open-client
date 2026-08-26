@@ -9,20 +9,20 @@ NC='\033[0m'
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
 show_help() {
-    echo -e "Uso: ./scripts/deploy.sh [OPCIÓN]"
+    echo -e "Uso: ./scripts/deploy.sh [OPCION]"
     echo -e "Opciones:"
-    echo -e "  --vm          Despliegue local/remoto en máquina virtual con Docker Compose (Por defecto)"
+    echo -e "  --vm          Despliegue local/remoto en maquina virtual con Docker Compose (Por defecto)"
     echo -e "  --aca         Despliegue en la nube usando Azure Container Apps"
     echo -e "  --help        Muestra este mensaje de ayuda"
 }
 
 # ----------------------------------------------------
-# Modo 1: Despliegue en Máquina Virtual / Servidor Ubuntu
+# Modo 1: Despliegue en Maquina Virtual / Servidor Ubuntu
 # ----------------------------------------------------
 deploy_vm() {
-    echo -e "${GREEN}=== Desplegando en Máquina Virtual / Servidor Linux ===${NC}"
+    echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
 
-    echo -e "${YELLOW}[+] Descargando código actualizado de Git...${NC}"
+    echo -e "${YELLOW}[+] Descargando codigo actualizado de Git...${NC}"
     git pull origin develop
 
     if [ ! -f .env ]; then
@@ -40,7 +40,7 @@ deploy_vm() {
         exit 1
     fi
 
-    echo -e "${YELLOW}[+] Reconstruyendo la imagen de producción con Docker...${NC}"
+    echo -e "${YELLOW}[+] Reconstruyendo la imagen de produccion con Docker...${NC}"
     $COMPOSE build openclient
 
     echo -e "${YELLOW}[+] Iniciando el stack completo (sqlserver + db-init + openclient)...${NC}"
@@ -54,7 +54,7 @@ deploy_vm() {
     if [ "$HTTP_STATUS" -eq 200 ]; then
         echo -e "${GREEN}[✓] DESPLIEGUE EN VM EXITOSO (HTTP 200).${NC}"
     else
-        echo -e "${RED}[!] ADVERTENCIA: La app devolvió el código HTTP $HTTP_STATUS.${NC}"
+        echo -e "${RED}[!] ADVERTENCIA: La app devolvio el codigo HTTP $HTTP_STATUS.${NC}"
         echo -e "Revisa los logs con: ${YELLOW}$COMPOSE logs openclient${NC}"
     fi
 }
@@ -65,18 +65,16 @@ deploy_vm() {
 deploy_aca() {
     echo -e "${GREEN}=== Desplegando en Azure Container Apps ===${NC}"
 
-    # 1. Validar que Azure CLI esté instalado
     if ! command -v az &> /dev/null; then
-        echo -e "${RED}Error: Azure CLI ('az') no está instalado.${NC}"
+        echo -e "${RED}Error: Azure CLI ('az') no esta instalado.${NC}"
         exit 1
     fi
 
-    # Variables configurables de Azure (ajusta a tus nombres de recursos)
     RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-rg-openclient}"
     CONTAINER_APP_NAME="${AZURE_APP_NAME:-app-openclient}"
     REGISTRY_NAME="${AZURE_REGISTRY_NAME:-acropenclient}"
 
-    echo -e "${YELLOW}[+] Comprobando sesión activa en Azure...${NC}"
+    echo -e "${YELLOW}[+] Comprobando sesion activa en Azure...${NC}"
     az account show > /dev/null 2>&1 || az login
 
     echo -e "${YELLOW}[+] Compilando y subiendo imagen a Azure Container Registry (ACR)...${NC}"
@@ -95,19 +93,19 @@ deploy_aca() {
 }
 
 # ----------------------------------------------------
-# Flujo Principal y Selección
+# Flujo Principal y Seleccion
 # ----------------------------------------------------
 MODE="$1"
 
 if [ -z "$MODE" ]; then
     echo -e "${YELLOW}Selecciona el entorno de despliegue:${NC}"
-    echo "1) Máquina Virtual / Ubuntu (Docker Compose)"
+    echo "1) Maquina Virtual / Ubuntu (Docker Compose)"
     echo "2) Azure Container Apps (Nube Azure)"
-    read -p "Opción [1-2]: " choice
+    read -p "Opcion [1-2]: " choice
     case "$choice" in
         1) MODE="--vm" ;;
         2) MODE="--aca" ;;
-        *) echo -e "${RED}Opción no válida.${NC}"; exit 1 ;;
+        *) echo -e "${RED}Opcion no valida.${NC}"; exit 1 ;;
     esac
 fi
 
@@ -122,7 +120,7 @@ case "$MODE" in
         show_help
         ;;
     *)
-        echo -e "${RED}Opción desconocida: $MODE${NC}"
+        echo -e "${RED}Opcion desconocida: $MODE${NC}"
         show_help
         exit 1
         ;;
