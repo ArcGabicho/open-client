@@ -92,3 +92,20 @@ BEGIN
     ADD MEMBER [openclient_user];
 END
 GO
+
+
+IF NOT EXISTS
+(
+    SELECT 1
+    FROM sys.database_permissions
+    WHERE grantee_principal_id = DATABASE_PRINCIPAL_ID(N'openclient_runtime')
+      AND permission_name = N'CREATE TABLE'
+)
+BEGIN
+    PRINT 'Otorgando permisos DDL/DML al rol openclient_runtime...';
+
+    ALTER ROLE [db_ddladmin] ADD MEMBER [openclient_runtime];
+    ALTER ROLE [db_datareader] ADD MEMBER [openclient_runtime];
+    ALTER ROLE [db_datawriter] ADD MEMBER [openclient_runtime];
+END
+GO

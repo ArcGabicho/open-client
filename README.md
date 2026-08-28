@@ -9,11 +9,7 @@ Open Client es un proyecto que te brinda un servicio web, panel administrativo y
 <a href="#"><img src="https://img.shields.io/badge/EF_Core-10.0-512BD4" alt="EF Core"></a>
 <a href="#"><img src="https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver" alt="SQL Server"></a>
 <a href="#"><img src="https://img.shields.io/badge/Docker-Multi--stage-2496ED?logo=docker" alt="Docker"></a>
-<a href="#"><img src="https://img.shields.io/badge/GitHub_Actions-CI%2FCD-2088FF?logo=githubactions" alt="GitHub Actions"></a>
 <a href="#"><img src="https://img.shields.io/badge/Azure-Container_Apps-0089D6?logo=microsoftazure" alt="Azure"></a>
-<a href="#"><img src="https://img.shields.io/badge/License-MIT-blue.svg" alt="License"></a>
-<a href="#"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs welcome"></a>
-
 ---
 
 #### Instalación Local: Usando los Scripts en Bash
@@ -28,8 +24,6 @@ curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/script
 curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/deploy.sh | bash
 ```
 
-Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor o a la API REST.
-
 ---
 
-Este proyecto está bajo la Licencia MIT — consulta `LICENSE.md` para más detalles.
+Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor o a la API REST.
