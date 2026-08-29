@@ -5,11 +5,80 @@
 <HeadContent>
     <meta name="description" content="Conoce la historia, visión y el equipo detrás de OpenClient. Innovación y automatización para tu negocio." />
     <meta name="keywords" content="OpenClient, sobre nosotros, equipo, vision, tecnologia" />
-    
+
     <meta property="og:title" content="Open Client | Sobre Nosotros" />
     <meta property="og:description" content="Conoce la historia, visión y el equipo detrás de OpenClient." />
     <meta property="og:type" content="website" />
 </HeadContent>
 
-<h1>Sobre Nosotros</h1>
-<p>Contenido de la página sobre nosotros...</p>
+<div class="about">
+
+    <section class="about-hero">
+        <span class="eyebrow"><span class="eyebrow-dot"></span> Sobre el proyecto</span>
+        <h1 class="about-title">Un sistema de clientes que tú controlas.</h1>
+        <p class="about-lead">
+            Open Client nace de una idea simple: la información comercial de tus clientes es tuya,
+            y el software que la gestiona debería poder vivir donde tú decidas. Es un proyecto de
+            código abierto, publicado bajo licencia MIT.
+        </p>
+    </section>
+
+    <section class="about-block">
+        <h2>Qué es Open Client</h2>
+        <p>
+            Open Client es un servicio web con panel administrativo y consulta comercial de clientes.
+            Reúne en una sola aplicación el panel de gestión, una API para integraciones y un agente
+            de IA para consultar la información. Todo el sistema se despliega como una imagen Docker,
+            lista para Azure Container Apps o para tu propia máquina virtual.
+        </p>
+    </section>
+
+    <section class="about-block">
+        <h2>Principios</h2>
+        <div class="principle-grid">
+            <article class="principle-card">
+                <span class="principle-index">01</span>
+                <h3>Control de los datos</h3>
+                <p>El sistema completo corre en tu infraestructura. Nada de dependencias con servicios de terceros para operar.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">02</span>
+                <h3>Despliegue simple</h3>
+                <p>Un script de instalación local y un script de despliegue. De cero a panel funcionando en minutos.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">03</span>
+                <h3>Stack moderno</h3>
+                <p>Construido sobre .NET 10 y Blazor Web App con render interactivo en servidor.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">04</span>
+                <h3>Código abierto</h3>
+                <p>Publicado bajo licencia MIT. El código está disponible para leer, adaptar y desplegar.</p>
+            </article>
+        </div>
+    </section>
+
+    <section class="about-block">
+        <h2>Arquitectura</h2>
+        <ul class="arch-list">
+            <li><span>Frontend y backend</span> Blazor Web App · Interactive Server · Razor Components</li>
+            <li><span>Datos</span> Entity Framework Core 10 sobre SQL Server 2022</li>
+            <li><span>Empaquetado</span> Imagen Docker multi-stage</li>
+            <li><span>Despliegue</span> Azure Container Apps o Azure VM mediante scripts</li>
+            <li><span>Acceso</span> Autenticación por sesión para el panel</li>
+        </ul>
+    </section>
+
+    <section class="about-cta">
+        <div>
+            <h2>¿Quieres verlo funcionando?</h2>
+            <p>Explora la documentación o entra directamente al panel.</p>
+        </div>
+        <div class="about-cta-actions">
+            <a href="/docs" class="btn btn-primary">Ver documentación</a>
+            <a href="/contact" class="btn btn-ghost">Contactar</a>
+        </div>
+    </section>
+
+</div>

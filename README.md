@@ -26,4 +26,4 @@ curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/script
 
 ---
 
-Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor o a la API REST.
+Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor.
