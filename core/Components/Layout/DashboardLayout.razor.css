@@ -153,49 +153,7 @@
     flex-shrink: 0;
 }
 
-.dash-search {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: clamp(140px, 22vw, 260px);
-    padding: 0.5rem 0.9rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-lg);
-    background: var(--bg-softer);
-    color: var(--text-mute);
-    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
-}
-
-.dash-search:focus-within {
-    background: var(--bg);
-    border-color: var(--accent);
-    box-shadow: var(--ring);
-    color: var(--text-soft);
-}
-
-.dash-search svg {
-    width: 16px;
-    height: 16px;
-    flex-shrink: 0;
-}
-
-.dash-search input {
-    flex: 1;
-    min-width: 0;
-    border: none;
-    outline: none;
-    background: transparent;
-    font: inherit;
-    font-size: 0.88rem;
-    color: var(--text);
-}
-
-.dash-search input::placeholder {
-    color: var(--text-mute);
-}
-
 .dash-icon-circle {
-    position: relative;
     display: grid;
     place-items: center;
     width: 38px;
@@ -205,6 +163,7 @@
     background: var(--bg);
     color: var(--text-soft);
     cursor: pointer;
+    text-decoration: none;
     transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
 
@@ -221,17 +180,6 @@
 .dash-icon-circle:focus-visible {
     outline: none;
     box-shadow: var(--ring);
-}
-
-.dash-badge-dot {
-    position: absolute;
-    top: 8px;
-    right: 9px;
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: var(--accent);
-    border: 2px solid var(--bg);
 }
 
 .dash-profile {
@@ -273,12 +221,6 @@
     font-size: 0.85rem;
     font-weight: 600;
     white-space: nowrap;
-}
-
-.dash-profile-caret {
-    width: 15px;
-    height: 15px;
-    color: var(--text-mute);
 }
 
 /* ---------- Burger (mobile) ---------- */
@@ -372,10 +314,6 @@
 @media (max-width: 620px) {
     .dash-topbar {
         gap: 0.6rem;
-    }
-
-    .dash-search {
-        display: none;
     }
 
     .dash-profile-name {

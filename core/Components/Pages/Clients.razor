@@ -18,7 +18,7 @@
             <p class="clients-count">@CountLabel</p>
         </div>
 
-        <button type="button" class="btn-add">
+        <button type="button" class="btn-add" @onclick="OpenCreate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 5v14M5 12h14" />
             </svg>
@@ -216,15 +216,15 @@
                                         </dl>
 
                                         <div class="acc-panel-actions">
-                                            <button type="button" class="acc-act acc-act-primary">
+                                            <button type="button" class="acc-act acc-act-primary" @onclick="() => OpenDetail(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" /></svg>
                                                 Ver ficha
                                             </button>
-                                            <button type="button" class="acc-act">
+                                            <button type="button" class="acc-act @(notes.ContainsKey(c.Id) ? "acc-act-has" : null)" @onclick="() => OpenNotes(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10" /></svg>
-                                                Notas
+                                                @(notes.ContainsKey(c.Id) ? "Notas (1)" : "Notas")
                                             </button>
-                                            <button type="button" class="acc-act">
+                                            <button type="button" class="acc-act" @onclick="() => OpenEdit(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" /></svg>
                                                 Editar
                                             </button>
@@ -274,8 +274,8 @@
                                 <div><dt>Alta</dt><dd>@c.CreatedAt.ToString("dd/MM/yyyy")</dd></div>
                             </dl>
                             <div class="row-actions">
-                                <button type="button" class="chip-btn chip-btn-notes">Notas</button>
-                                <button type="button" class="chip-btn chip-btn-view">Ver</button>
+                                <button type="button" class="chip-btn chip-btn-notes" @onclick="() => OpenNotes(c)">Notas</button>
+                                <button type="button" class="chip-btn chip-btn-view" @onclick="() => OpenDetail(c)">Ver</button>
                             </div>
                         </article>
                     }
@@ -317,6 +317,154 @@
 
     </section>
 
+    @* ---------- Modal: nuevo / editar cliente ---------- *@
+    @if (showForm)
+    {
+        <div class="modal-overlay" @onclick="CloseModals">
+            <div class="modal modal-lg" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+                <div class="modal-head">
+                    <h2>@(editingId is null ? "Nuevo cliente" : "Editar cliente")</h2>
+                    <button type="button" class="modal-close" @onclick="CloseModals" aria-label="Cerrar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="mform">
+                        <label class="mfield mfield-wide">
+                            <span>Razón comercial *</span>
+                            <input @bind="form.CompanyName" maxlength="100" autocomplete="off" />
+                        </label>
+                        <label class="mfield mfield-wide">
+                            <span>Razón social</span>
+                            <input @bind="form.LegalName" maxlength="100" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>RUC</span>
+                            <input @bind="form.TaxId" maxlength="20" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Industria</span>
+                            <input @bind="form.Industry" maxlength="200" list="mform-industries" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Nombre de contacto</span>
+                            <input @bind="form.FirstName" maxlength="50" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Apellido de contacto</span>
+                            <input @bind="form.LastName" maxlength="50" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Cargo</span>
+                            <input @bind="form.JobTitle" maxlength="50" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Correo</span>
+                            <input type="email" @bind="form.Email" maxlength="400" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Teléfono</span>
+                            <input @bind="form.PhoneNumber" maxlength="20" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Sitio web</span>
+                            <input @bind="form.Website" maxlength="500" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Distrito</span>
+                            <input @bind="form.District" maxlength="100" autocomplete="off" />
+                        </label>
+                        <label class="mfield">
+                            <span>Provincia</span>
+                            <input @bind="form.Province" maxlength="100" autocomplete="off" />
+                        </label>
+                        <label class="mfield mfield-wide">
+                            <span>Dirección</span>
+                            <input @bind="form.Address" maxlength="500" autocomplete="off" />
+                        </label>
+                    </div>
+                    <datalist id="mform-industries">
+                        @foreach (var ind in industries)
+                        {
+                            <option value="@ind" />
+                        }
+                    </datalist>
+                    @if (!string.IsNullOrEmpty(formError))
+                    {
+                        <p class="modal-error">@formError</p>
+                    }
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="mbtn" @onclick="CloseModals" disabled="@saving">Cancelar</button>
+                    <button type="button" class="mbtn mbtn-primary" @onclick="SaveFormAsync" disabled="@saving">
+                        @(saving ? "Guardando…" : editingId is null ? "Crear cliente" : "Guardar cambios")
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ---------- Modal: ver ficha ---------- *@
+    @if (detailClient is { } d)
+    {
+        <div class="modal-overlay" @onclick="CloseModals">
+            <div class="modal" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+                <div class="modal-head">
+                    <div class="modal-head-id">
+                        <span class="client-avatar" style="background:@AvatarColor(d.DisplayName)" aria-hidden="true">@d.Initials</span>
+                        <h2>@d.DisplayName</h2>
+                    </div>
+                    <button type="button" class="modal-close" @onclick="CloseModals" aria-label="Cerrar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <dl class="acc-fields">
+                        <div class="acc-field acc-field-wide"><dt>Razón social</dt><dd>@Dash(d.LegalName)</dd></div>
+                        <div class="acc-field"><dt>RUC</dt><dd class="acc-mono">@Dash(d.TaxId)</dd></div>
+                        <div class="acc-field"><dt>Industria</dt><dd>@Dash(d.Industry)</dd></div>
+                        <div class="acc-field"><dt>Contacto</dt><dd>@Dash(d.ContactName)</dd></div>
+                        <div class="acc-field"><dt>Cargo</dt><dd>@Dash(d.JobTitle)</dd></div>
+                        <div class="acc-field"><dt>Correo</dt><dd>@Dash(d.Email)</dd></div>
+                        <div class="acc-field"><dt>Teléfono</dt><dd>@Dash(d.PhoneNumber)</dd></div>
+                        <div class="acc-field"><dt>Sitio web</dt><dd>@(string.IsNullOrWhiteSpace(d.Website) ? "—" : WebDisplay(d.Website))</dd></div>
+                        <div class="acc-field"><dt>Ubicación</dt><dd>@(string.IsNullOrWhiteSpace(d.Location) ? "—" : d.Location)</dd></div>
+                        <div class="acc-field"><dt>Alta</dt><dd>@d.CreatedAt.ToString("dd/MM/yyyy")</dd></div>
+                        <div class="acc-field acc-field-wide"><dt>Dirección</dt><dd>@Dash(d.Address)</dd></div>
+                    </dl>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="mbtn" @onclick="CloseModals">Cerrar</button>
+                    <button type="button" class="mbtn mbtn-primary" @onclick="() => OpenEdit(d)">Editar</button>
+                </div>
+            </div>
+        </div>
+    }
+
+    @* ---------- Modal: notas ---------- *@
+    @if (notesClient is { } n)
+    {
+        <div class="modal-overlay" @onclick="CloseModals">
+            <div class="modal modal-sm" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+                <div class="modal-head">
+                    <h2>Notas · @n.DisplayName</h2>
+                    <button type="button" class="modal-close" @onclick="CloseModals" aria-label="Cerrar">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <textarea class="modal-textarea" rows="6" @bind="notesDraft"
+                              placeholder="Escribe una nota interna sobre este cliente…"></textarea>
+                    <p class="modal-hint">Las notas se guardan solo durante esta sesión.</p>
+                </div>
+                <div class="modal-foot">
+                    <button type="button" class="mbtn" @onclick="CloseModals">Cancelar</button>
+                    <button type="button" class="mbtn mbtn-primary" @onclick="SaveNotes">Guardar nota</button>
+                </div>
+            </div>
+        </div>
+    }
+
 </div>
 
 @code {
@@ -330,8 +478,107 @@
 
     private CancellationTokenSource? searchDebounce;
 
+    // --- Estado de los modales ---
+    private bool showForm;
+    private int? editingId;
+    private ClientEditModel form = new();
+    private string? formError;
+    private bool saving;
+
+    private ClientListItemDto? detailClient;
+    private ClientListItemDto? notesClient;
+    private string notesDraft = string.Empty;
+    private readonly Dictionary<int, string> notes = new();
+
     private void Toggle(int id) =>
         expandedId = expandedId == id ? null : id;
+
+    private void OpenCreate()
+    {
+        form = new ClientEditModel();
+        editingId = null;
+        formError = null;
+        showForm = true;
+    }
+
+    private void OpenEdit(ClientListItemDto client)
+    {
+        form = ClientEditModel.FromDto(client);
+        editingId = client.Id;
+        formError = null;
+        detailClient = null;
+        showForm = true;
+    }
+
+    private void OpenDetail(ClientListItemDto client) => detailClient = client;
+
+    private void OpenNotes(ClientListItemDto client)
+    {
+        notesClient = client;
+        notesDraft = notes.GetValueOrDefault(client.Id, string.Empty);
+    }
+
+    private void SaveNotes()
+    {
+        if (notesClient is { } client)
+        {
+            var text = notesDraft?.Trim() ?? string.Empty;
+
+            if (text.Length == 0)
+            {
+                notes.Remove(client.Id);
+            }
+            else
+            {
+                notes[client.Id] = text;
+            }
+        }
+
+        notesClient = null;
+    }
+
+    private void CloseModals()
+    {
+        showForm = false;
+        detailClient = null;
+        notesClient = null;
+    }
+
+    private async Task SaveFormAsync()
+    {
+        if (string.IsNullOrWhiteSpace(form.CompanyName))
+        {
+            formError = "La razón comercial es obligatoria.";
+            return;
+        }
+
+        saving = true;
+        formError = null;
+        StateHasChanged();
+
+        try
+        {
+            if (editingId is { } id)
+            {
+                await ClientService.UpdateAsync(id, form);
+            }
+            else
+            {
+                await ClientService.CreateAsync(form);
+            }
+
+            showForm = false;
+            await LoadAsync();
+        }
+        catch (Exception ex)
+        {
+            formError = $"No se pudo guardar: {ex.Message}";
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
