@@ -2,50 +2,112 @@
 @layout DashboardLayout
 @attribute [Authorize]
 
-<PageTitle>Open Client | Inicio</PageTitle>
+@using OpenClient.Interfaces
+@using OpenClient.Models.DTO
+@inject IClientService ClientService
+
+<PageTitle>Open Client | Panel de Inicio</PageTitle>
 
 <div class="home">
 
     <header class="home-hero">
-        <span class="home-eyebrow">Inicio</span>
-        <h1 class="home-title">Bienvenido a Open&nbsp;Client</h1>
-        <p class="home-lead">
-            Este es tu panel. Desde aquí gestionas la cartera comercial de clientes:
-            búsqueda, filtros, ficha completa y alta, edición o borrado.
-        </p>
+        <div class="home-hero-text">
+            <span class="home-eyebrow">@Today</span>
+            <h1 class="home-title">@greeting, bienvenido a Open&nbsp;Client</h1>
+            <p class="home-lead">
+                Este es el panel del sistema. Desde aquí consultas y gestionas toda la
+                cartera comercial de clientes: búsqueda, filtros, ficha completa y alta,
+                edición o borrado.
+            </p>
+        </div>
+        <a href="/dashboard/clients" class="home-cta">
+            Ir a Clientes
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+        </a>
     </header>
-
-    <nav class="home-modules" aria-label="Módulos">
-        <a href="/dashboard/clients" class="home-card">
-            <span class="home-card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M16 19c0-2.2-1.8-4-4-4s-4 1.8-4 4M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                    <path d="M20 19c0-1.6-1-3-2.5-3.6M17 10.8A3 3 0 0 0 17 5" />
-                </svg>
-            </span>
-            <span class="home-card-body">
-                <strong>Clientes</strong>
-                <span>Consulta y gestiona toda la cartera comercial.</span>
-            </span>
-            <svg class="home-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M9 6l6 6-6 6" />
-            </svg>
-        </a>
-
-        <a href="/docs" target="_blank" rel="noopener noreferrer" class="home-card">
-            <span class="home-card-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" />
-                </svg>
-            </span>
-            <span class="home-card-body">
-                <strong>Documentación</strong>
-                <span>Instalación, despliegue y funcionamiento del panel.</span>
-            </span>
-            <svg class="home-card-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M7 17 17 7M9 7h8v8" />
-            </svg>
-        </a>
-    </nav>
-
 </div>
+
+@code {
+    private int? totalClients;
+    private int? industryCount;
+    private DateTime? lastCreated;
+    private bool dbOk;
+    private IReadOnlyList<ClientListItemDto> recentClients = [];
+
+    private readonly string greeting = GreetingFor(DateTime.Now);
+
+    private string Today
+    {
+        get
+        {
+            var now = DateTime.Now;
+            return $"{now.Day} de {Meses[now.Month - 1]} de {now.Year}";
+        }
+    }
+
+    private string LastCreatedLabel =>
+        lastCreated is { } date ? date.ToString("dd/MM/yyyy") : "—";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var recent = await ClientService.GetClientsAsync(
+                new ClientSearchFilter { Page = 1, PageSize = 10, SortBy = "recent" });
+
+            totalClients = recent.TotalCount;
+            recentClients = recent.Items.Take(6).ToList();
+            lastCreated = recent.Items.Count > 0 ? recent.Items[0].CreatedAt : null;
+
+            industryCount = (await ClientService.GetIndustriesAsync()).Count;
+            dbOk = true;
+        }
+        catch
+        {
+            // Si la base de datos no está disponible, el inicio se muestra igual
+            // con los valores en "—" y el estado en "Sin conexión".
+            dbOk = false;
+        }
+    }
+
+    private static string Fmt(int? value) =>
+        value is { } v ? v.ToString("N0") : "—";
+
+    private static string Dash(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "Sin industria" : value;
+
+    private static string GreetingFor(DateTime now) => now.Hour switch
+    {
+        >= 5 and < 12 => "Buenos días",
+        >= 12 and < 20 => "Buenas tardes",
+        _ => "Buenas noches"
+    };
+
+    private static readonly string[] Meses =
+    {
+        "enero", "febrero", "marzo", "abril", "mayo", "junio",
+        "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"
+    };
+
+    private static readonly string[] AvatarPalette =
+        { "#635bff", "#1f9d6b", "#e0893b", "#2f6df0", "#c0497a", "#7c5cff" };
+
+    private static string AvatarColor(string seed)
+    {
+        if (string.IsNullOrEmpty(seed))
+        {
+            return "#8b909c";
+        }
+
+        var sum = 0;
+
+        foreach (var ch in seed)
+        {
+            sum += ch;
+        }
+
+        return AvatarPalette[sum % AvatarPalette.Length];
+    }
+}
