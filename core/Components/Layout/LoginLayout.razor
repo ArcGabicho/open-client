@@ -1,7 +1,6 @@
 @inherits LayoutComponentBase
 
 <div class="auth-shell">
-
     <section class="auth-form-side">
         <a href="/" class="auth-brand">
             <span class="auth-brand-mark" aria-hidden="true">
@@ -23,23 +22,24 @@
     </section>
 
     <aside class="auth-visual-side" aria-hidden="true">
-        <div class="auth-visual-inner">
-            <svg class="auth-glyph" viewBox="0 0 400 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="200" cy="200" r="150" stroke="currentColor" stroke-width="1.25" opacity="0.35" />
-                <circle cx="200" cy="200" r="104" stroke="currentColor" stroke-width="1.25" opacity="0.5" />
-                <circle cx="200" cy="200" r="58" stroke="currentColor" stroke-width="1.25" opacity="0.7" />
-                <path d="M200 20a180 180 0 0 0 0 360M200 20a180 180 0 0 1 0 360M20 200h360M64 108h272M64 292h272"
-                      stroke="currentColor" stroke-width="1.1" opacity="0.4" />
-                <rect x="176" y="176" width="48" height="48" rx="12" fill="currentColor" opacity="0.9" />
-            </svg>
+        <div class="auth-visual-content">
+            <span class="auth-visual-brand">
+                <span class="auth-visual-brand-mark">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="9" />
+                        <path d="M12 3a13 13 0 0 0 0 18M12 3a13 13 0 0 1 0 18M3.5 9h17M3.5 15h17" />
+                    </svg>
+                </span>
+                OPEN&nbsp;CLIENT
+            </span>
 
-            <div class="auth-visual-card">
-                <span class="auth-visual-dot"></span>
-                <div>
-                    <strong>Tus datos, tu infraestructura.</strong>
-                    <span>Panel comercial de clientes desplegable con Docker en tu propio entorno.</span>
-                </div>
-            </div>
+            <h2 class="auth-visual-headline">
+                El sistema de datos comerciales de tus clientes, en tu propia infraestructura.
+            </h2>
+
+            <p class="auth-visual-sub">
+                Despliega el panel con Docker y conserva el control total sobre la información.
+            </p>
         </div>
     </aside>
 

@@ -1,0 +1,410 @@
+/* ============================================================
+   Open Client — Dashboard welcome view
+   Blazor scoped CSS. Palette on the .welcome wrapper (":root"
+   doesn't survive CSS isolation). Fills the content area at
+   full width; no scroll on either axis on laptop / desktop.
+   ============================================================ */
+
+.welcome {
+    --bg: #ffffff;
+    --bg-soft: #f5f6fa;
+    --bg-softer: #fafbfd;
+    --ink-panel: #14151b;
+    --text: #14151a;
+    --text-soft: #565b67;
+    --text-mute: #8b909c;
+    --border: #ebecf1;
+    --border-strong: #dcdee6;
+    --accent: #635bff;
+    --accent-hover: #4b43e6;
+    --accent-soft: #f0efff;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 26px;
+    --ring: 0 0 0 4px rgba(99, 91, 255, 0.16);
+    --shadow-1: 0 1px 2px rgba(20, 21, 26, 0.04), 0 1px 3px rgba(20, 21, 26, 0.06);
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: clamp(0.7rem, 1.8vw, 1.15rem);
+    color: var(--text);
+    overflow: hidden;
+    overflow-wrap: anywhere;
+}
+
+/* ---------- Hero ---------- */
+
+.wl-hero {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+    padding: clamp(1rem, 2.4vw, 1.5rem) clamp(1.15rem, 3vw, 1.9rem);
+    background:
+        radial-gradient(120% 160% at 0% 0%, var(--accent-soft), transparent 55%),
+        var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+}
+
+.wl-hero-text {
+    min-width: 0;
+}
+
+.wl-eyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--accent);
+}
+
+.wl-title {
+    margin: 0.45rem 0 0;
+    font-size: clamp(1.3rem, 2.7vw, 1.9rem);
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    font-weight: 650;
+    color: var(--text);
+}
+
+.wl-lead {
+    margin: 0.45rem 0 0;
+    max-width: 44rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    color: var(--text-soft);
+}
+
+.wl-hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.wl-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    white-space: nowrap;
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.wl-btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.wl-btn-primary:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.wl-btn-primary:active {
+    transform: translateY(1px);
+}
+
+.wl-btn-ghost {
+    background: var(--bg);
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.wl-btn-ghost:hover {
+    background: var(--bg-soft);
+    border-color: var(--text-mute);
+}
+
+.wl-btn:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+/* ---------- Stat cards (icon + text, fixed 3-up) ---------- */
+
+.wl-stats {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: clamp(0.6rem, 1.6vw, 1rem);
+}
+
+.wl-stat {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.85rem 1rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+}
+
+.wl-stat-icon {
+    flex-shrink: 0;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.wl-stat-icon svg {
+    width: 19px;
+    height: 19px;
+}
+
+.wl-stat-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+    min-width: 0;
+}
+
+.wl-stat-label {
+    font-size: 0.76rem;
+    line-height: 1.25;
+    color: var(--text-mute);
+}
+
+.wl-stat-value {
+    font-size: clamp(1.2rem, 2.4vw, 1.45rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--text);
+}
+
+/* ---------- Body: quick access (left) + media (right) ---------- */
+
+.wl-body {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+    gap: clamp(0.7rem, 1.8vw, 1.15rem);
+    align-items: stretch;
+}
+
+/* Both blocks are grid items and stretch to the same row height. */
+.wl-quick,
+.wl-media {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    min-height: 0;
+    margin: 0;
+    padding: clamp(1rem, 2.4vw, 1.3rem);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-1);
+}
+
+.wl-quick-head,
+.wl-media-head {
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--text-mute);
+}
+
+/* 2 x 2 tile grid — fills the block so its height matches the video */
+.wl-tiles {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(2, minmax(0, 1fr));
+    gap: clamp(0.55rem, 1.5vw, 0.8rem);
+}
+
+.wl-tile {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    padding: 0.95rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg-softer);
+    text-decoration: none;
+    color: var(--text);
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.wl-tile:hover {
+    border-color: var(--border-strong);
+    background: var(--bg-soft);
+}
+
+.wl-tile:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+.wl-tile-icon {
+    display: grid;
+    place-items: center;
+    width: 34px;
+    height: 34px;
+    margin-bottom: 0.15rem;
+    border-radius: var(--radius-sm);
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.wl-tile-icon svg {
+    width: 18px;
+    height: 18px;
+}
+
+.wl-tile-title {
+    font-size: 0.92rem;
+    font-weight: 650;
+}
+
+.wl-tile-desc {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    font-size: 0.79rem;
+    line-height: 1.45;
+    color: var(--text-soft);
+}
+
+.wl-tile-meta {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-mute);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.wl-tile-cta {
+    margin-top: auto;
+    padding-top: 0.55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.78rem;
+    font-weight: 650;
+    color: var(--accent);
+}
+
+.wl-tile-cta svg {
+    width: 14px;
+    height: 14px;
+    transition: transform 0.15s ease;
+}
+
+.wl-tile:hover .wl-tile-cta svg {
+    transform: translateX(3px);
+}
+
+/* ---------- Media / video block ---------- */
+
+.wl-media-frame {
+    position: relative;
+    flex: 1 1 auto;
+    min-height: 0;
+    aspect-ratio: 16 / 9;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: var(--ink-panel);
+}
+
+.wl-media-video {
+    position: absolute;
+    inset: 0;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background: var(--ink-panel);
+}
+
+.wl-media-placeholder {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.8rem;
+}
+
+.wl-media-play {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.wl-media-play svg {
+    width: 20px;
+    height: 20px;
+    margin-left: 2px;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+    .welcome {
+        height: auto;
+        overflow: visible;
+    }
+
+    .wl-body {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 560px) {
+    .wl-stats {
+        grid-template-columns: 1fr;
+    }
+
+    .wl-hero-actions {
+        width: 100%;
+    }
+
+    .wl-hero-actions .wl-btn {
+        flex: 1 1 auto;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 430px) {
+    .wl-tiles {
+        grid-template-columns: 1fr;
+    }
+}

@@ -1,0 +1,395 @@
+/* ============================================================
+   Open Client — Dashboard layout (horizontal top bar)
+   Blazor scoped CSS. The palette lives on the .dashboard-shell
+   wrapper because ":root" selectors don't survive Blazor's CSS
+   isolation rewrite. The global .container adds 2.5rem 5rem of
+   padding and html/body use overflow:hidden, so the shell
+   cancels that frame and owns its own scroll context.
+   ============================================================ */
+
+.dashboard-shell {
+    --bg: #ffffff;
+    --bg-soft: #f5f6fa;
+    --bg-softer: #fafbfd;
+    --ink-panel: #14151b;
+    --text: #14151a;
+    --text-soft: #565b67;
+    --text-mute: #8b909c;
+    --border: #ebecf1;
+    --border-strong: #dcdee6;
+    --accent: #635bff;
+    --accent-hover: #4b43e6;
+    --accent-soft: #f0efff;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 26px;
+    --ring: 0 0 0 4px rgba(99, 91, 255, 0.16);
+    --shadow-1: 0 1px 2px rgba(20, 21, 26, 0.04), 0 1px 3px rgba(20, 21, 26, 0.06);
+    --shadow-2: 0 18px 44px -28px rgba(20, 21, 26, 0.22);
+
+    margin: -2.5rem -5rem;
+    height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-softer);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+}
+
+.dash-nav-toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ---------- Top bar ---------- */
+
+.dash-topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem;
+    height: 68px;
+    padding: 0 clamp(1rem, 3vw, 1.75rem);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    position: relative;
+    z-index: 20;
+}
+
+.dash-topbar-left {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.75rem, 3vw, 2rem);
+    min-width: 0;
+}
+
+.dash-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-decoration: none;
+    color: var(--text);
+    flex-shrink: 0;
+}
+
+.dash-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 9px;
+    background: var(--accent);
+    color: #fff;
+}
+
+.dash-brand-mark svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dash-brand-name {
+    font-weight: 700;
+    font-size: 0.95rem;
+    letter-spacing: 0.01em;
+}
+
+/* ---------- Primary nav (pill menu) ---------- */
+
+.dash-nav {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* NavLink renders its own <a>, so reach it through ::deep. */
+.dash-nav ::deep .dash-nav-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.9rem;
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    color: var(--text-soft);
+    font-size: 0.88rem;
+    font-weight: 550;
+    white-space: nowrap;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dash-nav ::deep .dash-nav-item svg {
+    width: 17px;
+    height: 17px;
+    flex-shrink: 0;
+}
+
+.dash-nav ::deep .dash-nav-item:hover {
+    background: var(--bg-soft);
+    color: var(--text);
+}
+
+.dash-nav ::deep .dash-nav-item.active {
+    background: var(--accent-soft);
+    color: var(--accent);
+    font-weight: 650;
+}
+
+.dash-nav ::deep .dash-nav-item:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+/* ---------- Right cluster ---------- */
+
+.dash-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.dash-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: clamp(140px, 22vw, 260px);
+    padding: 0.5rem 0.9rem;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-lg);
+    background: var(--bg-softer);
+    color: var(--text-mute);
+    transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease;
+}
+
+.dash-search:focus-within {
+    background: var(--bg);
+    border-color: var(--accent);
+    box-shadow: var(--ring);
+    color: var(--text-soft);
+}
+
+.dash-search svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+.dash-search input {
+    flex: 1;
+    min-width: 0;
+    border: none;
+    outline: none;
+    background: transparent;
+    font: inherit;
+    font-size: 0.88rem;
+    color: var(--text);
+}
+
+.dash-search input::placeholder {
+    color: var(--text-mute);
+}
+
+.dash-icon-circle {
+    position: relative;
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--text-soft);
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-icon-circle:hover {
+    background: var(--bg-soft);
+    color: var(--text);
+}
+
+.dash-icon-circle svg {
+    width: 17px;
+    height: 17px;
+}
+
+.dash-icon-circle:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+.dash-badge-dot {
+    position: absolute;
+    top: 8px;
+    right: 9px;
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: var(--accent);
+    border: 2px solid var(--bg);
+}
+
+.dash-profile {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.3rem 0.6rem 0.3rem 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--border-strong);
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.dash-profile:hover {
+    background: var(--bg-soft);
+}
+
+.dash-profile:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+.dash-avatar {
+    display: grid;
+    place-items: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--accent), #8f88ff);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.dash-profile-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.dash-profile-caret {
+    width: 15px;
+    height: 15px;
+    color: var(--text-mute);
+}
+
+/* ---------- Burger (mobile) ---------- */
+
+.dash-burger {
+    display: none;
+    width: 38px;
+    height: 38px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    cursor: pointer;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.dash-burger span {
+    display: block;
+    width: 16px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--text);
+}
+
+.dash-burger:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+/* ---------- Content ---------- */
+
+.dash-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: clamp(1.25rem, 3vw, 1.25rem);
+}
+
+.dash-scrim {
+    display: none;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1040px) {
+    .dash-burger {
+        display: inline-flex;
+    }
+
+    .dash-nav {
+        position: absolute;
+        top: calc(100% + 1px);
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.15rem;
+        padding: 0.6rem clamp(1rem, 3vw, 1.75rem) 0.9rem;
+        background: var(--bg);
+        border-bottom: 1px solid var(--border);
+        box-shadow: var(--shadow-2);
+        max-height: 0;
+        overflow: hidden;
+        visibility: hidden;
+        transition: max-height 0.25s ease, visibility 0s linear 0.25s;
+    }
+
+    .dash-nav-toggle:checked ~ .dash-topbar .dash-nav {
+        max-height: 24rem;
+        visibility: visible;
+        transition: max-height 0.25s ease, visibility 0s;
+    }
+
+    .dash-nav ::deep .dash-nav-item {
+        border-radius: var(--radius-sm);
+        padding: 0.7rem 0.8rem;
+        font-size: 0.92rem;
+    }
+
+    .dash-nav-toggle:checked ~ .dash-scrim {
+        display: block;
+        position: fixed;
+        inset: 0;
+        z-index: 10;
+        background: rgba(20, 21, 26, 0.4);
+    }
+}
+
+@media (max-width: 620px) {
+    .dash-topbar {
+        gap: 0.6rem;
+    }
+
+    .dash-search {
+        display: none;
+    }
+
+    .dash-profile-name {
+        display: none;
+    }
+
+    .dash-profile {
+        padding: 0.3rem;
+        border-radius: 999px;
+    }
+}
+
+@media (max-width: 380px) {
+    .dash-brand-name {
+        display: none;
+    }
+}

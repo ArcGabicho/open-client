@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using openclient.Components;
 using OpenClient.Data;
+using OpenClient.Interfaces;
 using OpenClient.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -16,6 +17,7 @@ builder.Services.AddDbContext<OpenClientDbContext>(options =>
 
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<DbInitializer>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)

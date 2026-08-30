@@ -1,23 +1,34 @@
 /* ============================================================
    Open Client — Auth layout (LoginLayout)
-   Split screen: white form panel (left) + soft grey visual
-   panel (right). Cancels the global .container padding for a
-   full-bleed layout and owns its own scroll context.
+   Split screen: white form panel (left) + dark enterprise
+   panel (right) with headline, feature checklist and quote.
+   Cancels the global .container padding for a full-bleed
+   layout and owns its own scroll context.
    ============================================================ */
 
 .auth-shell {
     --bg: #ffffff;
     --bg-soft: #f5f6fa;
+    --bg-softer: #fafbfd;
+    --ink-panel: #14151b;
     --text: #14151a;
     --text-soft: #565b67;
     --text-mute: #8b909c;
     --border: #ebecf1;
+    --border-strong: #dcdee6;
     --accent: #635bff;
+    --accent-hover: #4b43e6;
+    --accent-soft: #f0efff;
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 26px;
+    --ring: 0 0 0 4px rgba(99, 91, 255, 0.16);
 
     margin: -2.5rem -5rem;
     min-height: 100dvh;
     display: grid;
     grid-template-columns: 1fr 1fr;
+    overflow-x: hidden;
     background: var(--bg);
     color: var(--text);
     -webkit-font-smoothing: antialiased;
@@ -50,7 +61,7 @@
     place-items: center;
     width: 30px;
     height: 30px;
-    border-radius: 9px;
+    border-radius: 8px;
     background: var(--accent);
     color: #fff;
 }
@@ -63,7 +74,7 @@
 .auth-brand-name {
     font-weight: 700;
     font-size: 0.95rem;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
 }
 
 .auth-form-center {
@@ -86,77 +97,68 @@
     color: var(--text-mute);
 }
 
-/* ---------- Right: visual panel ---------- */
+/* ---------- Right: minimal enterprise panel ---------- */
 
 .auth-visual-side {
-    position: relative;
-    background: var(--bg-soft);
-    border-left: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 3rem;
-    overflow: hidden;
+    padding: clamp(2.5rem, 6vw, 5rem);
+    background: var(--bg-soft);
+    border-left: 1px solid var(--border);
 }
 
-.auth-visual-inner {
-    position: relative;
+.auth-visual-content {
     width: 100%;
-    max-width: 420px;
-    aspect-ratio: 1;
-    display: grid;
-    place-items: center;
+    max-width: 24rem;
 }
 
-.auth-glyph {
-    width: 100%;
-    height: 100%;
-    color: var(--accent);
-}
-
-.auth-visual-card {
-    position: absolute;
-    left: 50%;
-    bottom: 4%;
-    transform: translateX(-50%);
-    width: min(320px, 92%);
-    display: flex;
-    align-items: flex-start;
-    gap: 0.75rem;
-    padding: 1rem 1.15rem;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-}
-
-.auth-visual-dot {
-    flex-shrink: 0;
-    width: 9px;
-    height: 9px;
-    margin-top: 0.4rem;
-    border-radius: 999px;
-    background: var(--accent);
-    box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.16);
-}
-
-.auth-visual-card strong {
-    display: block;
-    font-size: 0.9rem;
-    font-weight: 600;
-    color: var(--text);
-    margin-bottom: 0.15rem;
-}
-
-.auth-visual-card span {
+.auth-visual-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
     font-size: 0.82rem;
-    line-height: 1.5;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     color: var(--text-soft);
 }
 
-/* ---------- Responsive: collapse to a single column ---------- */
+.auth-visual-brand-mark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+    background: var(--accent);
+    color: #fff;
+}
 
+.auth-visual-brand-mark svg {
+    width: 16px;
+    height: 16px;
+}
+
+.auth-visual-headline {
+    margin: 2rem 0 0;
+    font-size: clamp(1.4rem, 2.4vw, 1.8rem);
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.auth-visual-sub {
+    margin: 1rem 0 0;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-strong);
+    font-size: 0.92rem;
+    line-height: 1.65;
+    color: var(--text-soft);
+}
+
+/* ---------- Responsive ---------- */
+
+/* Tablet portrait & below: drop the split, form takes the full width */
 @media (max-width: 900px) {
     .auth-shell {
         grid-template-columns: 1fr;
@@ -171,13 +173,26 @@
     }
 }
 
+/* Phone */
 @media (max-width: 480px) {
+    .auth-form-side {
+        padding-block: clamp(1.5rem, 7vw, 2.25rem);
+    }
+
     .auth-form-center {
-        padding: 1.75rem 0;
+        padding: 1.5rem 0;
         align-items: flex-start;
     }
 
     .form-wrapper {
         max-width: 100%;
+    }
+}
+
+/* Short viewports (landscape phones): don't vertically centre, let it scroll */
+@media (max-height: 640px) {
+    .auth-form-center {
+        align-items: flex-start;
+        padding: 1.25rem 0;
     }
 }

@@ -1,94 +1,120 @@
+/* ============================================================
+   Open Client — Login form
+   Palette tokens cascade in from .auth-shell (LoginLayout);
+   fallbacks keep the form correct if rendered standalone.
+   ============================================================ */
+
 .login-header {
     margin-bottom: 2rem;
 }
 
 .title {
-    font-size: 1.85rem;
+    font-size: clamp(1.55rem, 5vw, 1.8rem);
     font-weight: 700;
-    color: #111827;
+    color: var(--text, #14151a);
     letter-spacing: -0.025em;
     margin: 0 0 0.5rem 0;
 }
 
 .subtitle {
-    color: #4b5563;
+    color: var(--text-soft, #565b67);
     font-size: 0.9rem;
-    line-height: 1.5;
+    line-height: 1.55;
     margin: 0;
 }
 
 .login-form {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.15rem;
 }
 
 .form-group {
     display: flex;
     flex-direction: column;
-    gap: 0.35rem;
+    gap: 0.4rem;
 }
 
 .form-group label {
     font-size: 0.8rem;
-    font-weight: 600;
-    color: #111827;
+    font-weight: 650;
+    color: var(--text, #14151a);
     letter-spacing: -0.01em;
 }
 
 .form-group input {
-    padding: 0.75rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
-    font-size: 0.9rem;
-    background-color: #fafafa;
-    color: #111827;
+    font-family: inherit;
+    padding: 0.72rem 0.9rem;
+    border: 1px solid var(--border-strong, #dcdee6);
+    border-radius: var(--radius-sm, 10px);
+    /* 16px keeps mobile Safari from zooming in on focus */
+    font-size: 1rem;
+    background-color: var(--bg-softer, #fafbfd);
+    color: var(--text, #14151a);
     outline: none;
-    transition: all 0.2s ease;
+    transition: border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .form-group input::placeholder {
-    color: #9ca3af;
+    color: var(--text-mute, #8b909c);
 }
 
 .form-group input:focus {
-    background-color: #ffffff;
-    border-color: #635bff;
-    box-shadow: 0 0 0 4px rgba(99, 91, 255, 0.1);
+    background-color: var(--bg, #ffffff);
+    border-color: var(--accent, #635bff);
+    box-shadow: var(--ring, 0 0 0 4px rgba(99, 91, 255, 0.16));
+}
+
+.login-error {
+    padding: 0.7rem 0.85rem;
+    border: 1px solid #f3c9c9;
+    border-radius: var(--radius-sm, 10px);
+    background: #fdf1f1;
+    color: #b42318;
+    font-size: 0.82rem;
+    line-height: 1.45;
 }
 
 .btn-submit {
-    margin-top: 0.5rem;
-    background-color: #635bff;
+    margin-top: 0.4rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--accent, #635bff);
     color: #ffffff;
-    border: none;
-    padding: 0.8rem 1rem; /* Mismo padding horizontal que el input */
-    border-radius: 0.75rem;
-    font-size: 0.95rem;
+    border: 1px solid var(--accent, #635bff);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-sm, 10px);
+    font-size: 0.92rem;
     font-weight: 600;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
 }
 
 .btn-submit:hover {
-    background-color: #5248f2;
-    transform: translateY(-1px);
-    box-shadow: 0 6px 16px rgba(99, 91, 255, 0.3);
+    background-color: var(--accent-hover, #4b43e6);
+    border-color: var(--accent-hover, #4b43e6);
+    box-shadow: 0 18px 44px -28px rgba(20, 21, 26, 0.35);
 }
 
 .btn-submit:active {
-    transform: translateY(0);
+    transform: translateY(1px);
+}
+
+.btn-submit:focus-visible {
+    outline: none;
+    box-shadow: var(--ring, 0 0 0 4px rgba(99, 91, 255, 0.16));
 }
 
 .signup-prompt {
     margin-top: 2rem;
     text-align: center;
     font-size: 0.85rem;
-    color: #4b5563;
+    color: var(--text-soft, #565b67);
 }
 
 .signup-prompt a {
-    color: #635bff;
+    color: var(--accent, #635bff);
     font-weight: 600;
     text-decoration: none;
 }
