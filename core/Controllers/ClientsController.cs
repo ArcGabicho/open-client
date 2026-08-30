@@ -7,10 +7,6 @@ using OpenClient.Models.DTO;
 
 namespace OpenClient.Controllers;
 
-/// <summary>
-/// API REST del catálogo de clientes. Comparte <see cref="IClientService"/> con
-/// el panel Blazor (que lo consume en proceso, sin pasar por HTTP).
-/// </summary>
 [ApiController]
 [Authorize]
 [Route("api/clients")]
@@ -28,7 +24,6 @@ public sealed class ClientsController : ControllerBase
         _logger = logger;
     }
 
-    /// <summary>GET /api/clients?search=&amp;industry=&amp;sortBy=&amp;page=&amp;pageSize=</summary>
     [HttpGet]
     [ProducesResponseType(typeof(PagedResult<ClientListItemDto>), StatusCodes.Status200OK)]
     public async Task<ActionResult<PagedResult<ClientListItemDto>>> GetClients(
@@ -39,7 +34,6 @@ public sealed class ClientsController : ControllerBase
         return Ok(result);
     }
 
-    /// <summary>GET /api/clients/industries</summary>
     [HttpGet("industries")]
     [ProducesResponseType(typeof(IReadOnlyList<string>), StatusCodes.Status200OK)]
     public async Task<ActionResult<IReadOnlyList<string>>> GetIndustries(
@@ -49,7 +43,6 @@ public sealed class ClientsController : ControllerBase
         return Ok(industries);
     }
 
-    /// <summary>GET /api/clients/{id}</summary>
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ClientDetailDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -64,7 +57,6 @@ public sealed class ClientsController : ControllerBase
             : Ok(ClientDetailDto.FromListItem(client));
     }
 
-    /// <summary>POST /api/clients</summary>
     [HttpPost]
     [ProducesResponseType(typeof(ClientDetailDto), StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -90,7 +82,6 @@ public sealed class ClientsController : ControllerBase
         }
     }
 
-    /// <summary>PUT /api/clients/{id}</summary>
     [HttpPut("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -111,7 +102,6 @@ public sealed class ClientsController : ControllerBase
         }
     }
 
-    /// <summary>DELETE /api/clients/{id} (borrado lógico)</summary>
     [HttpDelete("{id:int}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]

@@ -1,10 +1,9 @@
 /* ============================================================
-   Open Client — Dashboard layout (horizontal top bar)
-   Blazor scoped CSS. The palette lives on the .dashboard-shell
-   wrapper because ":root" selectors don't survive Blazor's CSS
-   isolation rewrite. The global .container adds 2.5rem 5rem of
-   padding and html/body use overflow:hidden, so the shell
-   cancels that frame and owns its own scroll context.
+   Open Client — Dashboard layout (sidebar lateral)
+   Blazor scoped CSS. El palette vive sobre .dashboard-shell porque
+   ":root" no sobrevive al reescribido de aislamiento. El .container
+   global añade 2.5rem 5rem de padding y html/body usan overflow:hidden,
+   así que el shell cancela ese marco y gestiona su propio scroll.
    ============================================================ */
 
 .dashboard-shell {
@@ -26,11 +25,11 @@
     --ring: 0 0 0 4px rgba(99, 91, 255, 0.16);
     --shadow-1: 0 1px 2px rgba(20, 21, 26, 0.04), 0 1px 3px rgba(20, 21, 26, 0.06);
     --shadow-2: 0 18px 44px -28px rgba(20, 21, 26, 0.22);
+    --sidebar-w: 248px;
 
     margin: -2.5rem -5rem;
     height: 100dvh;
     display: flex;
-    flex-direction: column;
     overflow: hidden;
     background: var(--bg-softer);
     color: var(--text);
@@ -46,33 +45,27 @@
     pointer-events: none;
 }
 
-/* ---------- Top bar ---------- */
+/* ---------- Sidebar ---------- */
 
-.dash-topbar {
+.dash-sidebar {
     flex-shrink: 0;
+    width: var(--sidebar-w);
+    height: 100%;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1.25rem;
-    height: 68px;
-    padding: 0 clamp(1rem, 3vw, 1.75rem);
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.1rem 0.85rem;
     background: var(--bg);
-    border-bottom: 1px solid var(--border);
-    position: relative;
-    z-index: 20;
-}
-
-.dash-topbar-left {
-    display: flex;
-    align-items: center;
-    gap: clamp(0.75rem, 3vw, 2rem);
-    min-width: 0;
+    border-right: 1px solid var(--border);
+    z-index: 50;
 }
 
 .dash-brand {
     display: inline-flex;
     align-items: center;
     gap: 0.6rem;
+    padding: 0.35rem 0.6rem;
+    margin-bottom: 0.55rem;
     text-decoration: none;
     color: var(--text);
     flex-shrink: 0;
@@ -86,6 +79,7 @@
     border-radius: 9px;
     background: var(--accent);
     color: #fff;
+    flex-shrink: 0;
 }
 
 .dash-brand-mark svg {
@@ -99,32 +93,31 @@
     letter-spacing: 0.01em;
 }
 
-/* ---------- Primary nav (pill menu) ---------- */
+/* ---------- Nav (módulos) ---------- */
 
 .dash-nav {
     display: flex;
-    align-items: center;
-    gap: 0.25rem;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
-/* NavLink renders its own <a>, so reach it through ::deep. */
+/* NavLink renderiza su propio <a>: alcanzarlo con ::deep. */
 .dash-nav ::deep .dash-nav-item {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 0.9rem;
-    border-radius: var(--radius-lg);
+    gap: 0.7rem;
+    padding: 0.62rem 0.7rem;
+    border-radius: var(--radius-sm);
     text-decoration: none;
     color: var(--text-soft);
-    font-size: 0.88rem;
-    font-weight: 550;
-    white-space: nowrap;
+    font-size: 0.9rem;
+    font-weight: 500;
     transition: background 0.15s ease, color 0.15s ease;
 }
 
 .dash-nav ::deep .dash-nav-item svg {
-    width: 17px;
-    height: 17px;
+    width: 18px;
+    height: 18px;
     flex-shrink: 0;
 }
 
@@ -144,71 +137,31 @@
     box-shadow: var(--ring);
 }
 
-/* ---------- Right cluster ---------- */
+/* ---------- Pie del sidebar ---------- */
 
-.dash-topbar-right {
+.dash-sidebar-foot {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
+.dash-user {
     display: flex;
     align-items: center;
     gap: 0.6rem;
-    flex-shrink: 0;
-}
-
-.dash-icon-circle {
-    display: grid;
-    place-items: center;
-    width: 38px;
-    height: 38px;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--bg);
-    color: var(--text-soft);
-    cursor: pointer;
-    text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
-}
-
-.dash-icon-circle:hover {
-    background: var(--bg-soft);
-    color: var(--text);
-}
-
-.dash-icon-circle svg {
-    width: 17px;
-    height: 17px;
-}
-
-.dash-icon-circle:focus-visible {
-    outline: none;
-    box-shadow: var(--ring);
-}
-
-.dash-profile {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.3rem 0.6rem 0.3rem 0.35rem;
-    border-radius: 999px;
-    border: 1px solid var(--border-strong);
-    background: var(--bg);
-    color: var(--text);
-    cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.dash-profile:hover {
-    background: var(--bg-soft);
-}
-
-.dash-profile:focus-visible {
-    outline: none;
-    box-shadow: var(--ring);
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius-sm);
+    min-width: 0;
 }
 
 .dash-avatar {
     display: grid;
     place-items: center;
-    width: 30px;
-    height: 30px;
+    width: 32px;
+    height: 32px;
     border-radius: 999px;
     background: linear-gradient(135deg, var(--accent), #8f88ff);
     color: #fff;
@@ -217,16 +170,80 @@
     flex-shrink: 0;
 }
 
-.dash-profile-name {
-    font-size: 0.85rem;
-    font-weight: 600;
+.dash-user-meta {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.3;
+}
+
+.dash-user-meta strong {
+    font-size: 0.82rem;
+    font-weight: 650;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* ---------- Burger (mobile) ---------- */
+.dash-user-meta span {
+    font-size: 0.72rem;
+    color: var(--text-mute);
+}
+
+.dash-logout {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.62rem 0.7rem;
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    color: var(--text-soft);
+    font-size: 0.88rem;
+    font-weight: 500;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.dash-logout svg {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.dash-logout:hover {
+    background: #fdf1f1;
+    color: #b42318;
+}
+
+.dash-logout:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+}
+
+/* ---------- Columna principal ---------- */
+
+.dash-main {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Topbar: solo móvil (abrir el drawer + marca) */
+.dash-topbar {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.9rem;
+    height: 60px;
+    padding: 0 clamp(0.85rem, 3vw, 1.25rem);
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+}
 
 .dash-burger {
-    display: none;
+    display: inline-flex;
     width: 38px;
     height: 38px;
     border: 1px solid var(--border-strong);
@@ -253,81 +270,59 @@
     box-shadow: var(--ring);
 }
 
-/* ---------- Content ---------- */
-
 .dash-content {
     flex: 1;
+    min-width: 0;
     overflow-y: auto;
-    padding: clamp(1.25rem, 3vw, 1.25rem);
+    overflow-x: hidden;
+    padding: clamp(1.25rem, 3vw, 2rem);
 }
 
 .dash-scrim {
     display: none;
 }
 
-/* ---------- Responsive ---------- */
+/* ---------- Responsive: sidebar → drawer ---------- */
 
-@media (max-width: 1040px) {
-    .dash-burger {
-        display: inline-flex;
+@media (max-width: 900px) {
+    .dash-topbar {
+        display: flex;
     }
 
-    .dash-nav {
-        position: absolute;
-        top: calc(100% + 1px);
+    .dash-sidebar {
+        position: fixed;
+        top: 0;
+        bottom: 0;
         left: 0;
-        right: 0;
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.15rem;
-        padding: 0.6rem clamp(1rem, 3vw, 1.75rem) 0.9rem;
-        background: var(--bg);
-        border-bottom: 1px solid var(--border);
+        z-index: 60;
+        width: min(var(--sidebar-w), 82vw);
+        transform: translateX(-100%);
+        transition: transform 0.25s ease;
         box-shadow: var(--shadow-2);
-        max-height: 0;
-        overflow: hidden;
-        visibility: hidden;
-        transition: max-height 0.25s ease, visibility 0s linear 0.25s;
     }
 
-    .dash-nav-toggle:checked ~ .dash-topbar .dash-nav {
-        max-height: 24rem;
-        visibility: visible;
-        transition: max-height 0.25s ease, visibility 0s;
-    }
-
-    .dash-nav ::deep .dash-nav-item {
-        border-radius: var(--radius-sm);
-        padding: 0.7rem 0.8rem;
-        font-size: 0.92rem;
+    .dash-nav-toggle:checked ~ .dash-sidebar {
+        transform: translateX(0);
     }
 
     .dash-nav-toggle:checked ~ .dash-scrim {
         display: block;
         position: fixed;
         inset: 0;
-        z-index: 10;
-        background: rgba(20, 21, 26, 0.4);
+        z-index: 55;
+        background: rgba(20, 21, 26, 0.42);
     }
 }
 
-@media (max-width: 620px) {
-    .dash-topbar {
-        gap: 0.6rem;
-    }
-
-    .dash-profile-name {
-        display: none;
-    }
-
-    .dash-profile {
-        padding: 0.3rem;
-        border-radius: 999px;
+/* En móvil .container no añade padding lateral: el shell no debe restarlo. */
+@media (max-width: 640px) {
+    .dashboard-shell {
+        margin-inline: 0;
     }
 }
 
 @media (max-width: 380px) {
-    .dash-brand-name {
+    .dash-topbar .dash-brand-name {
         display: none;
     }
 }

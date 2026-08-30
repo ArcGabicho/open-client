@@ -26,6 +26,9 @@
     display: flex;
     flex-direction: column;
     gap: clamp(3.25rem, 9vw, 8rem);
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
 }
 
 /* ---------- Shared primitives ---------- */
@@ -104,7 +107,7 @@
 
 .hero {
     display: grid;
-    grid-template-columns: 1.05fr 0.95fr;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
     gap: clamp(2.5rem, 5vw, 4.5rem);
     align-items: center;
 }
@@ -199,7 +202,7 @@
 
 .mock-rows li {
     display: grid;
-    grid-template-columns: auto 1fr auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
     align-items: center;
     gap: 0.75rem;
     padding: 0.7rem 0.25rem;
@@ -354,7 +357,7 @@
 
 .feature-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 1.1rem;
 }
 
@@ -400,128 +403,13 @@
     color: var(--text-soft);
 }
 
-/* ---------- Showcase ---------- */
+/* ---------- Deploy cards ---------- */
 
-.showcase {
+.deploy-cards {
     display: grid;
-    grid-template-columns: 1.5fr 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1.25rem;
-    align-items: stretch;
-}
-
-.showcase-browser {
-    height: 100%;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    overflow: hidden;
-    background: var(--bg);
-    box-shadow: var(--shadow-2);
-}
-
-.browser-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.75rem 1rem;
-    background: var(--bg-soft);
-    border-bottom: 1px solid var(--border);
-}
-
-.browser-bar > span:not(.browser-url) {
-    width: 9px;
-    height: 9px;
-    border-radius: 999px;
-    background: var(--border-strong);
-}
-
-.browser-url {
-    margin-left: 0.75rem;
-    font-size: 0.75rem;
-    color: var(--text-mute);
-}
-
-.browser-body {
-    display: grid;
-    grid-template-columns: 150px 1fr;
-    min-height: 300px;
-}
-
-.db-nav {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-    padding: 1rem 0.75rem;
-    border-right: 1px solid var(--border);
-    background: var(--bg-softer);
-}
-
-.db-nav-item {
-    font-size: 0.8rem;
-    font-weight: 500;
-    color: var(--text-soft);
-    padding: 0.5rem 0.65rem;
-    border-radius: 8px;
-}
-
-.db-nav-item.is-active {
-    background: var(--accent-soft);
-    color: var(--accent);
-    font-weight: 650;
-}
-
-.db-content {
-    padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.db-stat-row {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 0.85rem;
-}
-
-.db-stat {
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 0.85rem 0.95rem;
-}
-
-.db-stat-label {
-    display: block;
-    font-size: 0.72rem;
-    color: var(--text-mute);
-    margin-bottom: 0.3rem;
-}
-
-.db-stat-value {
-    font-size: 1.25rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-}
-
-.db-chart {
-    flex: 1;
-    display: flex;
-    align-items: flex-end;
-    gap: 0.6rem;
-    min-height: 120px;
-    padding-top: 0.5rem;
-    border-top: 1px solid var(--border);
-}
-
-.db-chart span {
-    flex: 1;
-    background: linear-gradient(180deg, var(--accent) 0%, #b7b2ff 100%);
-    border-radius: 6px 6px 3px 3px;
-    min-height: 12px;
-}
-
-.showcase-side {
-    display: flex;
-    flex-direction: column;
-    gap: 1.25rem;
+    align-items: start;
 }
 
 .code-card {
@@ -610,10 +498,10 @@
 
 /* ---------- Responsive ---------- */
 
-/* Laptop: keep two-up feature grid, single-column hero + showcase */
+/* Laptop: single-column hero, two-up feature grid */
 @media (max-width: 1024px) {
     .hero {
-        grid-template-columns: 1fr;
+        grid-template-columns: minmax(0, 1fr);
         gap: clamp(2.5rem, 6vw, 3.5rem);
     }
 
@@ -621,26 +509,15 @@
         max-width: 30rem;
     }
 
-    .showcase {
-        grid-template-columns: 1fr;
-    }
-
     .feature-grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 /* Tablet */
 @media (max-width: 768px) {
-    .browser-body {
+    .deploy-cards {
         grid-template-columns: 1fr;
-    }
-
-    .db-nav {
-        flex-direction: row;
-        flex-wrap: wrap;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
     }
 
     .cta-panel {
@@ -660,9 +537,9 @@
     }
 
     .mock-mini {
-        right: 0;
-        bottom: -1.25rem;
-        width: 13rem;
+        position: static;
+        width: 100%;
+        margin-top: 1rem;
     }
 
     .hero-actions,
@@ -673,10 +550,6 @@
     .hero-actions .btn,
     .cta-panel-actions .btn {
         flex: 1 1 auto;
-    }
-
-    .db-stat-row {
-        grid-template-columns: 1fr;
     }
 
     .stack {

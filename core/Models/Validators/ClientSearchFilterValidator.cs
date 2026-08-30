@@ -3,12 +3,6 @@ using OpenClient.Models.DTO;
 
 namespace OpenClient.Models.Validators;
 
-/// <summary>
-/// Comprobación defensiva de los parámetros de consulta que llegan por query
-/// string al controlador REST. Los setters de <see cref="ClientSearchFilter"/>
-/// ya autocorrigen valores fuera de rango; este validador los rechaza de forma
-/// explícita antes de llegar al servicio.
-/// </summary>
 public sealed class ClientSearchFilterValidator : AbstractValidator<ClientSearchFilter>
 {
     private static readonly int[] AllowedPageSizes = { 10, 25, 50, 100 };

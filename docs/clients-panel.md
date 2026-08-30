@@ -1,10 +1,14 @@
 # Panel de Clientes
 
-Cómo funciona `core/Components/Pages/Clients.razor`: la vista principal del
-catálogo comercial. Recorre la cadena **componente Blazor → servicio →
-repositorio → EF Core → SQL Server**, con alta, edición y borrado lógico
-reales, y está pensada para operar sobre la tabla de ~4018 clientes sin
-cargarla en memoria.
+Cómo funciona `core/Components/Pages/Dashboard.razor`: la única vista tras el
+inicio de sesión y la razón de ser del panel. Recorre la cadena **componente
+Blazor → servicio → repositorio → EF Core → SQL Server**, con alta, edición y
+borrado lógico reales, y está pensada para operar sobre la tabla de ~4018
+clientes sin cargarla en memoria.
+
+> El proyecto se limita a esto: el sitio público (`MainLayout` + Index / About /
+> Docs / Contact), el inicio de sesión y este panel. No hay más páginas de
+> aplicación.
 
 ---
 
@@ -12,8 +16,8 @@ cargarla en memoria.
 
 | Aspecto | Valor |
 | --- | --- |
-| Ruta | `/dashboard/clients` (`@page`) |
-| Layout | `DashboardLayout` |
+| Ruta | `/dashboard` (`@page`) |
+| Layout | `DashboardLayout` (topbar mínima: marca + cerrar sesión + perfil) |
 | Autorización | `@attribute [Authorize]` — requiere sesión con cookie |
 | Render mode | `@rendermode InteractiveServer` (interactividad opt-in) |
 | Ciclo de vida | `@implements IDisposable` (libera el debounce de búsqueda) |
@@ -29,7 +33,7 @@ como `AddScoped<IClientService, ClientService>()`.
 ## 2. Arquitectura de datos
 
 ```
-Clients.razor ─► IClientService ─► IClientRepository ─► IDbContextFactory<OpenClientDbContext> ─► SQL Server
+Dashboard.razor ─► IClientService ─► IClientRepository ─► IDbContextFactory<OpenClientDbContext> ─► SQL Server
     (UI)          (caso de uso)      (acceso a datos)      (un contexto por operación)
 
 ClientsController (api/clients) ─► IClientService   (misma capa; el panel Blazor NO pasa por HTTP)
@@ -121,6 +125,19 @@ private bool deleting;
 
 Toda interacción que cambie el conjunto de datos termina llamando a `LoadAsync()`.
 
+### Estructura de la página
+
+1. **Cabecera** (`.clients-head`): título, contador (`CountLabel`) y botón
+   *Nuevo cliente*.
+2. **Franja de resumen** (`.stat-row`): tres tarjetas — *Total de clientes*
+   (`result.TotalCount`), *Industrias* (`industries.Count`) y *En esta página*
+   (`result.Items.Count` de `result.TotalCount`). Datos ya cargados, sin
+   consultas extra.
+3. **Barra de controles** (`.clients-controls`): buscador, orden, filtro de
+   industria y conmutador lista/cuadrícula.
+4. **Tarjeta principal** (`.clients-card`): acordeón o cuadrícula + paginador.
+5. **Modales**: crear/editar, ver ficha y confirmar borrado.
+
 ---
 
 ## 5. Interacciones
@@ -199,10 +216,15 @@ La vista de cuadrícula reutiliza `OpenDetail` y `OpenDelete` en sus botones
 
 ---
 
-## 7. Estilos (`Clients.razor.css`, CSS aislado)
+## 7. Estilos (`Dashboard.razor.css`, CSS aislado)
 
 - Paleta y tokens sobre `.clients` (clase raíz), no en `:root` — ver la nota de
   aislamiento en `CONTRIBUTING.md`.
+- **Franja de resumen**: `.stat-row` es una rejilla de 3 → 2 → 1 columnas; cada
+  `.stat-card` es icono + etiqueta + valor.
+- La fila abierta del acordeón (`.acc-item.is-open`) lleva una barra de acento
+  a la izquierda (`box-shadow: inset 3px 0 0 var(--accent)`).
+- El estado "Sin resultados" (`.empty-state`) incluye un icono.
 - **Acordeón**: `.acc-head` y `.acc-summary` comparten `grid-template-columns`;
   toda pista flexible es `minmax(0, …)`. Bajo 820 px el resumen se apila y cada
   celda muestra su etiqueta (`data-label` + `::before`).

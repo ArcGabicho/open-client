@@ -12,17 +12,22 @@ contribución aceptas que se distribuya bajo esa misma licencia.
 
 ## 1. Antes de empezar
 
+- **Alcance del producto**: la superficie visible se limita a tres cosas — el
+  **sitio público** (`MainLayout` + Index / About / Docs / Contact), el
+  **inicio de sesión** (`/log-in`) y el **panel de clientes** (`/dashboard`,
+  `Dashboard.razor`). No añadas nuevas páginas de aplicación sin acordarlo antes
+  en una Issue.
 - **Idioma**: el código, la interfaz, los comentarios, la documentación y los
   mensajes de commit están en **español**. Mantén ese idioma en tus aportes.
 - **Rama principal**: `master`. Todo el trabajo parte de `master` y vuelve a
   `master` mediante Pull Request.
 - **Documentación de referencia** (carpeta `docs/`):
-  - `docs/app-overview.md` — perfil del proyecto, stack y endpoints.
+  - `docs/app-overview.md` — perfil del proyecto, stack y estructura.
   - `docs/architecture.md` — capas, `IDbContextFactory`, repositorio, validación, logging.
   - `docs/development-guide.md` — entorno local, estructura y verificación.
   - `docs/database-guide.md` / `docs/database-initialization.md` — esquema, seed y `DbInitializer`.
   - `docs/authentication.md` — modelo de autenticación (cookies + BCrypt).
-  - `docs/clients-panel.md` — funcionamiento del panel de clientes (`Clients.razor`).
+  - `docs/clients-panel.md` — funcionamiento del panel de clientes (`Dashboard.razor`).
   - `docs/rest-api.md` — endpoints REST de `/api/clients`.
   - `docs/docker-guide.md` / `docs/bash-scripts-guide.md` — contenedores y scripts.
 

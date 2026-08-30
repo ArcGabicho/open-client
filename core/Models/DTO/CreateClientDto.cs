@@ -1,6 +1,5 @@
 namespace OpenClient.Models.DTO;
 
-/// <summary>Cuerpo de <c>POST /api/clients</c>. Campos alineados con la entidad <c>Client</c>.</summary>
 public record CreateClientDto(
     string CompanyName,
     string? LegalName = null,

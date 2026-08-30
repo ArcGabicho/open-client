@@ -4,9 +4,59 @@
 
     <input type="checkbox" id="dash-nav-toggle" class="dash-nav-toggle" aria-hidden="true" tabindex="-1" />
 
-    <header class="dash-topbar">
+    <aside class="dash-sidebar">
+        <a href="/dashboard" class="dash-brand">
+            <span class="dash-brand-mark" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 3a13 13 0 0 0 0 18M12 3a13 13 0 0 1 0 18M3.5 9h17M3.5 15h17" />
+                </svg>
+            </span>
+            <span class="dash-brand-name">OPEN&nbsp;CLIENT</span>
+        </a>
 
-        <div class="dash-topbar-left">
+        <nav class="dash-nav" aria-label="Módulos">
+            <NavLink class="dash-nav-item" href="/dashboard" Match="NavLinkMatch.All">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-house-fill" viewBox="0 0 16 16">
+                    <path d="M8.707 1.5a1 1 0 0 0-1.414 0L.646 8.146a.5.5 0 0 0 .708.708L8 2.207l6.646 6.647a.5.5 0 0 0 .708-.708L13 5.793V2.5a.5.5 0 0 0-.5-.5h-1a.5.5 0 0 0-.5.5v1.293z"/>
+                    <path d="m8 3.293 6 6V13.5a1.5 1.5 0 0 1-1.5 1.5h-9A1.5 1.5 0 0 1 2 13.5V9.293z"/>
+                </svg>
+                <span>Inicio</span>
+            </NavLink>
+
+            <NavLink class="dash-nav-item" href="/dashboard/clients">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                    <path d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5"/>
+                </svg>
+                <span>Clientes</span>
+            </NavLink>
+        </nav>
+
+        <div class="dash-sidebar-foot">
+            <div class="dash-user">
+                <span class="dash-avatar" aria-hidden="true">GP</span>
+                <span class="dash-user-meta">
+                    <strong>Gabriel Polack</strong>
+                    <span>Administrador</span>
+                </span>
+            </div>
+
+            <a href="/auth/log-out" data-enhance-nav="false" class="dash-logout">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M10 12h11M18 9l3 3-3 3" />
+                </svg>
+                <span>Cerrar sesión</span>
+            </a>
+        </div>
+    </aside>
+
+    <label for="dash-nav-toggle" class="dash-scrim" aria-hidden="true"></label>
+
+    <div class="dash-main">
+        <header class="dash-topbar">
+            <label for="dash-nav-toggle" class="dash-burger" aria-label="Abrir menú de navegación">
+                <span></span><span></span><span></span>
+            </label>
             <a href="/dashboard" class="dash-brand">
                 <span class="dash-brand-mark" aria-hidden="true">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -16,71 +66,11 @@
                 </span>
                 <span class="dash-brand-name">OPEN&nbsp;CLIENT</span>
             </a>
+        </header>
 
-            <label for="dash-nav-toggle" class="dash-burger" aria-label="Abrir menú de navegación">
-                <span></span><span></span><span></span>
-            </label>
-
-            <nav class="dash-nav" aria-label="Navegación principal">
-                <NavLink class="dash-nav-item" href="/dashboard/clients">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M16 19c0-2.2-1.8-4-4-4s-4 1.8-4 4M12 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
-                        <path d="M20 19c0-1.6-1-3-2.5-3.6M17 10.8A3 3 0 0 0 17 5" />
-                    </svg>
-                    <span>Clientes</span>
-                </NavLink>
-
-                <NavLink class="dash-nav-item" href="/dashboard/ai-agent">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3Z" />
-                    </svg>
-                    <span>Agente IA</span>
-                </NavLink>
-
-                <NavLink class="dash-nav-item" href="/dashboard/api">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />
-                    </svg>
-                    <span>API</span>
-                </NavLink>
-
-                <NavLink class="dash-nav-item" href="/dashboard/tutorials">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <path d="M5 4h11l3 3v13H5zM9 4v6l2-1.4L13 10V4" />
-                    </svg>
-                    <span>Tutoriales</span>
-                </NavLink>
-
-                <NavLink class="dash-nav-item" href="/dashboard/settings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                        <circle cx="12" cy="12" r="3" />
-                        <path d="M19.4 13a1.65 1.65 0 0 0 .33 1.82l.05.05a2 2 0 1 1-2.83 2.83l-.05-.05a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.05.05a2 2 0 1 1-2.83-2.83l.05-.05a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.05-.05a2 2 0 1 1 2.83-2.83l.05.05a1.65 1.65 0 0 0 1.82.33H10a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.05-.05a2 2 0 1 1 2.83 2.83l-.05.05a1.65 1.65 0 0 0-.33 1.82V10a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z" />
-                    </svg>
-                    <span>Configuración</span>
-                </NavLink>
-            </nav>
-        </div>
-
-        <div class="dash-topbar-right">
-            <a href="/auth/log-out" data-enhance-nav="false" class="dash-icon-circle"
-               aria-label="Cerrar sesión" title="Cerrar sesión">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M14 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-2M10 12h11M18 9l3 3-3 3" />
-                </svg>
-            </a>
-
-            <button type="button" class="dash-profile">
-                <span class="dash-avatar" aria-hidden="true">GP</span>
-                <span class="dash-profile-name">Gabriel Polack</span>
-            </button>
-        </div>
-
-    </header>
-
-    <label for="dash-nav-toggle" class="dash-scrim" aria-hidden="true"></label>
-
-    <main class="dash-content">
-        @Body
-    </main>
+        <main class="dash-content">
+            @Body
+        </main>
+    </div>
 
 </div>

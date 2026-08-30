@@ -3,10 +3,6 @@ using OpenClient.Models.DTO;
 
 namespace OpenClient.Models.Validators;
 
-/// <summary>
-/// Reglas de servidor para crear/editar un cliente. Los límites de longitud
-/// reflejan <c>ClientConfiguration</c> (Fluent API de EF Core).
-/// </summary>
 public sealed class ClientEditModelValidator : AbstractValidator<ClientEditModel>
 {
     public ClientEditModelValidator()

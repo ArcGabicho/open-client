@@ -19,9 +19,9 @@
             </h1>
 
             <p class="hero-lead">
-                Open Client es un servicio web con panel administrativo y consulta comercial de
-                clientes. Despliega tu propio sistema de datos en minutos y conserva el control
-                total sobre la información, con Blazor Web App, Docker y Azure.
+                Open Client es un panel web para consultar y gestionar tu cartera comercial de
+                clientes. Despliégalo en minutos y conserva el control total sobre la
+                información, con Blazor Web App, Docker y Azure.
             </p>
 
             <div class="hero-actions">
@@ -49,26 +49,26 @@
                     <li>
                         <span class="mock-avatar mock-a1">NR</span>
                         <span class="mock-name">Nova Retail S.A.</span>
-                        <span class="mock-chip mock-chip-ok">Activo</span>
-                        <span class="mock-val">S/ 48.200</span>
+                        <span class="mock-chip mock-chip-ok">Retail</span>
+                        <span class="mock-val">20342…108</span>
                     </li>
                     <li>
                         <span class="mock-avatar mock-a2">CL</span>
                         <span class="mock-name">Comercial Lima</span>
-                        <span class="mock-chip mock-chip-ok">Activo</span>
-                        <span class="mock-val">S/ 31.750</span>
+                        <span class="mock-chip mock-chip-ok">Servicios</span>
+                        <span class="mock-val">20510…203</span>
                     </li>
                     <li>
                         <span class="mock-avatar mock-a3">AG</span>
                         <span class="mock-name">Andes Group</span>
-                        <span class="mock-chip mock-chip-mute">En pausa</span>
-                        <span class="mock-val">S/ 12.900</span>
+                        <span class="mock-chip mock-chip-mute">Sin industria</span>
+                        <span class="mock-val">20554…771</span>
                     </li>
                     <li>
                         <span class="mock-avatar mock-a4">VP</span>
                         <span class="mock-name">Volt Partners</span>
-                        <span class="mock-chip mock-chip-ok">Activo</span>
-                        <span class="mock-val">S/ 27.410</span>
+                        <span class="mock-chip mock-chip-ok">Tecnología</span>
+                        <span class="mock-val">20600…912</span>
                     </li>
                 </ul>
             </div>
@@ -76,11 +76,11 @@
             <div class="mock mock-mini">
                 <div class="mock-mini-head">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                        <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3Z" />
+                        <path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13" />
                     </svg>
-                    Agente IA
+                    Alta, edición y borrado
                 </div>
-                <p>«¿Qué clientes no compran desde hace 60 días?»</p>
+                <p>Formulario con validación y borrado lógico reversible.</p>
             </div>
         </div>
     </section>
@@ -102,10 +102,10 @@
     <section class="section">
         <header class="section-head">
             <span class="eyebrow"><span class="eyebrow-dot"></span> Qué incluye</span>
-            <h2 class="section-title">Todo lo necesario para operar tu base de clientes.</h2>
+            <h2 class="section-title">Un panel para operar tu cartera de clientes.</h2>
             <p class="section-lead">
-                Cada módulo forma parte del panel de Open Client. Nada de servicios externos:
-                el sistema completo corre donde tú lo despliegues.
+                Un sitio público, el inicio de sesión y el panel de clientes. Nada de
+                servicios externos: todo corre donde tú lo despliegues.
             </p>
         </header>
 
@@ -118,27 +118,38 @@
                     </svg>
                 </span>
                 <h3>Panel de clientes</h3>
-                <p>Consulta y gestión comercial de tu cartera desde una interfaz única y ordenada.</p>
+                <p>Consulta y gestión de toda tu cartera comercial desde una interfaz única.</p>
             </article>
 
             <article class="feature-card">
                 <span class="feature-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                        <path d="M9 8l-4 4 4 4M15 8l4 4-4 4" />
+                        <circle cx="11" cy="11" r="7" />
+                        <path d="M21 21l-4.3-4.3" />
                     </svg>
                 </span>
-                <h3>API</h3>
-                <p>Acceso programático a los datos para integrarlos con el resto de tus herramientas.</p>
+                <h3>Búsqueda y filtros</h3>
+                <p>Busca por razón social, RUC, contacto o correo; filtra por industria y ordena.</p>
             </article>
 
             <article class="feature-card">
                 <span class="feature-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                        <path d="M12 3l1.9 4.6L18.5 9l-4.6 1.9L12 15l-1.9-4.1L5.5 9l4.6-1.4L12 3ZM18 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8.8-2Z" />
+                        <path d="M12 5v14M5 12h14" />
                     </svg>
                 </span>
-                <h3>Agente IA</h3>
-                <p>Un asistente para preguntar por tu información de clientes en lenguaje natural.</p>
+                <h3>Alta, edición y borrado</h3>
+                <p>Formulario con validación en servidor y borrado lógico reversible.</p>
+            </article>
+
+            <article class="feature-card">
+                <span class="feature-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" />
+                    </svg>
+                </span>
+                <h3>Ficha completa</h3>
+                <p>Cada cliente se despliega con todos sus datos: fiscales, contacto y ubicación.</p>
             </article>
 
             <article class="feature-card">
@@ -150,17 +161,7 @@
                     </svg>
                 </span>
                 <h3>Infraestructura propia</h3>
-                <p>Imagen Docker multi-stage lista para Azure Container Apps o tu propia máquina virtual.</p>
-            </article>
-
-            <article class="feature-card">
-                <span class="feature-icon">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                        <path d="M5 4h11l3 3v13H5zM9 4v6l2-1.4L13 10V4" />
-                    </svg>
-                </span>
-                <h3>Tutoriales</h3>
-                <p>Guías dentro del panel para poner en marcha cada parte del sistema.</p>
+                <p>Imagen Docker multi-stage lista para Azure Container Apps o tu propia VM.</p>
             </article>
 
             <article class="feature-card">
@@ -171,84 +172,42 @@
                     </svg>
                 </span>
                 <h3>Acceso protegido</h3>
-                <p>Autenticación por sesión: el panel solo está disponible para usuarios con credenciales.</p>
+                <p>Autenticación por sesión: el panel solo es visible para usuarios con credenciales.</p>
             </article>
         </div>
     </section>
 
-    <!-- ================= PRODUCT SHOWCASE ================= -->
+    <!-- ================= DEPLOY ================= -->
     <section class="section">
         <header class="section-head">
-            <span class="eyebrow"><span class="eyebrow-dot"></span> El producto</span>
-            <h2 class="section-title">Un panel, una API y un despliegue reproducible.</h2>
+            <span class="eyebrow"><span class="eyebrow-dot"></span> Despliegue</span>
+            <h2 class="section-title">Dos comandos y el panel está en marcha.</h2>
+            <p class="section-lead">
+                Instálalo en tu máquina para probarlo o despliégalo en tu infraestructura.
+                Los datos se quedan siempre en tu SQL Server.
+            </p>
         </header>
 
-        <div class="showcase">
-            <div class="showcase-main">
-                <div class="showcase-browser">
-                    <div class="browser-bar">
-                        <span></span><span></span><span></span>
-                        <span class="browser-url">tu-dominio.com/dashboard</span>
-                    </div>
-                    <div class="browser-body">
-                        <aside class="db-nav">
-                            <span class="db-nav-item is-active">Dashboard</span>
-                            <span class="db-nav-item">Clientes</span>
-                            <span class="db-nav-item">API</span>
-                            <span class="db-nav-item">Agente IA</span>
-                            <span class="db-nav-item">Tutoriales</span>
-                            <span class="db-nav-item">Configuración</span>
-                        </aside>
-                        <div class="db-content">
-                            <div class="db-stat-row">
-                                <div class="db-stat">
-                                    <span class="db-stat-label">Clientes</span>
-                                    <span class="db-stat-value">1.284</span>
-                                </div>
-                                <div class="db-stat">
-                                    <span class="db-stat-label">Activos</span>
-                                    <span class="db-stat-value">947</span>
-                                </div>
-                                <div class="db-stat">
-                                    <span class="db-stat-label">Consultas hoy</span>
-                                    <span class="db-stat-value">312</span>
-                                </div>
-                            </div>
-                            <div class="db-chart">
-                                <span style="height:38%"></span>
-                                <span style="height:56%"></span>
-                                <span style="height:44%"></span>
-                                <span style="height:71%"></span>
-                                <span style="height:63%"></span>
-                                <span style="height:88%"></span>
-                                <span style="height:74%"></span>
-                            </div>
-                        </div>
-                    </div>
+        <div class="deploy-cards">
+            <div class="code-card">
+                <div class="code-card-head">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <path d="M4 5h16v14H4zM7 9l3 3-3 3M13 15h4" />
+                    </svg>
+                    Instalación local
                 </div>
+                <pre class="code-block"><span class="code-prompt">$</span> curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/setup.sh | bash</pre>
             </div>
 
-            <div class="showcase-side">
-                <div class="code-card">
-                    <div class="code-card-head">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                            <path d="M4 5h16v14H4zM7 9l3 3-3 3M13 15h4" />
-                        </svg>
-                        Instalación local
-                    </div>
-                    <pre class="code-block"><span class="code-prompt">$</span> curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/setup.sh | bash</pre>
+            <div class="code-card">
+                <div class="code-card-head">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+                        <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 21v-9" />
+                    </svg>
+                    Despliegue
                 </div>
-
-                <div class="code-card">
-                    <div class="code-card-head">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
-                            <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM4 7.5l8 4.5 8-4.5M12 21v-9" />
-                        </svg>
-                        Despliegue
-                    </div>
-                    <pre class="code-block"><span class="code-prompt">$</span> curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/deploy.sh | bash</pre>
-                    <p class="code-foot">Compatible con Azure Container Apps y Azure VM.</p>
-                </div>
+                <pre class="code-block"><span class="code-prompt">$</span> curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/deploy.sh | bash</pre>
+                <p class="code-foot">Compatible con Azure Container Apps y Azure VM.</p>
             </div>
         </div>
     </section>

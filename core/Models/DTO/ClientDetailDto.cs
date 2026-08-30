@@ -1,6 +1,5 @@
 namespace OpenClient.Models.DTO;
 
-/// <summary>Respuesta de <c>GET /api/clients/{id}</c>: el registro completo.</summary>
 public record ClientDetailDto(
     int Id,
     string? CompanyName,

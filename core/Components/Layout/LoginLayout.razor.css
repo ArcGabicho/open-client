@@ -165,6 +165,13 @@
     }
 }
 
+/* En móvil .container no añade padding lateral: el shell no debe restarlo. */
+@media (max-width: 640px) {
+    .auth-shell {
+        margin-inline: 0;
+    }
+}
+
 /* Phone */
 @media (max-width: 480px) {
     .auth-form-side {

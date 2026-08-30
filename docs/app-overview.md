@@ -1,18 +1,28 @@
 # Perfil del Proyecto
 
-El proyecto open-client se define como un CRM & Engine de datos comercial 100% Open Source y Self-Hosted, creado con .NET 10, Blazor y SQL Server en Docker que incluye una base de datos de clientes lista para usar y una REST API para conectar Agentes de IA, WhatsApp o Facturacion desde tu propio VPS o Infraestructura Cloud.
+open-client es una aplicacion web comercial de clientes, 100 % Open Source y
+Self-Hosted, creada con .NET 10, Blazor y SQL Server en Docker. La superficie
+visible se limita a tres cosas:
+
+1. **Sitio publico** — `MainLayout` con las paginas Inicio, Nosotros,
+   Documentacion y Contacto.
+2. **Inicio de sesion** — `/log-in`, autenticacion por cookie + BCrypt.
+3. **Panel de clientes** — `/dashboard`: listado paginado con busqueda,
+   filtros, ficha desplegable y alta/edicion/borrado logico.
+
+Internamente existe una API REST (`/api/clients`) que comparte la misma capa de
+servicio con el panel; ver `rest-api.md`. No se expone ninguna otra pantalla de
+aplicacion.
 
 ## Stack del Proyecto
 
-- **Blazor Web App en .NET 10** — Interfaz interactiva SPA basada en C# sin necesidad de JavaScript complejo.
-- **API REST Publica + Panel Web** — Mismo binario respondiendo como API JSON (`/api/clientes`) y como Panel de Administracion.
+- **Blazor Web App en .NET 10** — SSR con interactividad de servidor por pagina.
 - **SQL Server 2022 en Docker** — Base de datos relacional aislada en contenedor con volumenes persistentes.
-- **Entity Framework Core 10** — ORM robusto con soporte de migraciones automaticas y consultas LINQ optimizadas.
-- **Bash Scripts de Automatizacion** — Scripts en la carpeta `scripts/` (`run.sh`, `setup.sh`, `clear.sh`) para acelerar la gestion en Linux.
-- **Hot Reload en Desarrollo** — Flujo de desarrollo interactivo con `dotnet watch` ejecutado directamente en el host.
-- **Busqueda y Paginacion Eficiente** — Filtrado optimizado por RUC, Razon Social y Nombre Comercial.
-- **Docker Multi-stage** — Imagen ligera de produccion sin SDK para minimo tamano de despliegue.
-- **GitHub Actions & Azure Integration** — Pipelines listos de CI/CD para compilacion, testing y despliegue automatico en Azure Container Apps / ACR.
+- **Entity Framework Core 10** — Acceso a datos vía repositorio + `IDbContextFactory`; migraciones automaticas al arrancar.
+- **FluentValidation + Serilog** — Validacion de servidor y logging estructurado (consola + fichero).
+- **Bash Scripts de Automatizacion** — Scripts en `scripts/` (`run.sh`, `setup.sh`, `clear.sh`).
+- **Docker Multi-stage** — Imagen ligera de produccion sin SDK.
+- **GitHub Actions & Azure** — Pipeline de CI/CD para Azure Container Apps / ACR.
 
 ## Estructura del Repositorio
 
@@ -22,16 +32,23 @@ open-client/
 │   └── workflows/
 │       └── deploy.yml          # Pipeline de CI/CD para Azure Container Apps
 ├── core/
-│   ├── Components/             # Componentes e Interfaz UI de Blazor (.razor)
-│   ├── Controllers/            # API REST Publica (JSON Controller)
-│   ├── Data/                   # AppDbContext y configuraciones de EF Core
-│   ├── Models/                 # Entidades del Dominio (Cliente.cs, etc.)
-│   ├── Services/               # Capa de Logica de Negocio y Servicios C#
-│   ├── wwwroot/                # Recursos estaticos (CSS, JS, imagenes)
-│   ├── appsettings.json        # Configuracion del servidor
-│   ├── appsettings.Development.json # Configuracion local (localhost)
+│   ├── Components/
+│   │   ├── Layout/             # MainLayout (publico), LoginLayout, DashboardLayout
+│   │   └── Pages/              # Index/About/Docs/Contact, Login, Dashboard (panel de clientes)
+│   ├── Controllers/            # API REST JSON (/api/clients, /auth)
+│   ├── Data/
+│   │   ├── Context/            # OpenClientDbContext + fabrica de diseno
+│   │   ├── Configurations/     # Fluent API de EF Core
+│   │   ├── Migrations/         # Migraciones EF Core
+│   │   ├── Repositories/       # IClientRepository + ClientRepository
+│   │   └── Seeds/              # DbInitializer, DbSeeder, ClientSeedData
+│   ├── Extensions/             # ServiceExtensions (composicion de la DI)
+│   ├── Interfaces/             # IClientService, IAuthService, IDbInitializer
+│   ├── Models/                 # Domain/ · DTO/ · Validators/ (FluentValidation)
+│   ├── Services/               # ClientService, AuthService
+│   ├── wwwroot/                # Recursos estaticos
 │   ├── openclient.csproj       # Proyecto .NET 10
-│   └── Program.cs              # Entrypoint de ASP.NET Core y Registro de Inyeccion de Dependencias
+│   └── Program.cs              # Serilog + ServiceExtensions + pipeline
 ├── docker/
 │   ├── docker-compose.yml      # Infraestructura completa (SQL Server + inicializacion + app)
 │   ├── Dockerfile              # Multi-stage Dockerfile de la app (solo produccion)
@@ -56,23 +73,10 @@ open-client/
 
 ## API REST & Endpoints
 
-### Endpoints Disponibles
-
-Ademas del panel web interactivo de Blazor, el sistema expone los siguientes endpoints HTTP en JSON para consumo de clientes externos:
-
-#### Health Check
-
-`HTTP GET /api/health`
-
-#### Listar y Buscar Clientes
-
-`HTTP GET /api/clientes?page=1&limit=20&search=CLINICA`
-
-| Parametro | Tipo | Default | Descripcion |
-|-----------|------|---------|-------------|
-| page | int | 1 | Numero de pagina actual |
-| limit | int | 20 | Resultados por pagina (maximo 100) |
-| search | string | — | Busqueda por RUC, Razon Social o Nombre Comercial |
+El binario tambien responde como API JSON bajo `/api/clients` (autenticada con
+la misma cookie de sesion) y expone `GET /health` y `GET /health/ready` para
+readiness/liveness. La referencia completa de endpoints, cuerpos y codigos de
+estado esta en **`rest-api.md`**.
 
 ## Conexion a SQL Server
 

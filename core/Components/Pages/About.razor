@@ -24,10 +24,10 @@
     <section class="about-block">
         <h2>Qué es Open Client</h2>
         <p>
-            Open Client es un servicio web con panel administrativo y consulta comercial de clientes.
-            Reúne en una sola aplicación el panel de gestión, una API para integraciones y un agente
-            de IA para consultar la información. Todo el sistema se despliega como una imagen Docker,
-            lista para Azure Container Apps o para tu propia máquina virtual.
+            Open Client es una aplicación web con tres partes: un sitio público, el inicio de
+            sesión y un panel de gestión comercial de clientes. Todo se despliega como una
+            imagen Docker, lista para Azure Container Apps o para tu propia máquina virtual, y
+            los datos viven siempre en tu SQL Server.
         </p>
     </section>
     <section class="about-block">
@@ -58,11 +58,12 @@
     <section class="about-block">
         <h2>Arquitectura</h2>
         <ul class="arch-list">
-            <li><span>Frontend y backend</span> Blazor Web App · Interactive Server · Razor Components</li>
-            <li><span>Datos</span> Entity Framework Core 10 sobre SQL Server 2022</li>
+            <li><span>Interfaz</span> Blazor Web App · SSR con interactividad de servidor por página</li>
+            <li><span>Datos</span> Entity Framework Core 10 sobre SQL Server 2022, con borrado lógico</li>
+            <li><span>Capas</span> Componente → servicio → repositorio → EF Core (ver <code>docs/architecture.md</code>)</li>
             <li><span>Empaquetado</span> Imagen Docker multi-stage</li>
             <li><span>Despliegue</span> Azure Container Apps o Azure VM mediante scripts</li>
-            <li><span>Acceso</span> Autenticación por sesión para el panel</li>
+            <li><span>Acceso</span> Autenticación por sesión (cookie + BCrypt) para el panel</li>
         </ul>
     </section>
     <section class="about-cta">

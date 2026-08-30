@@ -3,12 +3,12 @@
 <PageTitle>Open Client | Documentación Técnica y Guías</PageTitle>
 
 <HeadContent>
-    <meta name="description" content="Explora la documentación oficial de OpenClient: guías de integración, referencia de API, manuales de usuario y tutoriales paso a paso." />
-    <meta name="keywords" content="documentacion, openclient, api reference, manual de usuario, guias, integracion" />
+    <meta name="description" content="Documentación de Open Client: instalación local, despliegue en tu infraestructura y funcionamiento del panel de clientes." />
+    <meta name="keywords" content="documentacion, openclient, instalacion, despliegue, panel de clientes, docker" />
     <meta name="robots" content="index, follow" />
 
-    <meta property="og:title" content="Open Client | Documentación Oficial" />
-    <meta property="og:description" content="Aprende a integrar y configurar OpenClient con nuestras guías y referencias técnicas." />
+    <meta property="og:title" content="Open Client | Documentación" />
+    <meta property="og:description" content="Cómo instalar, desplegar y usar el panel de clientes de Open Client." />
     <meta property="og:type" content="article" />
 
 </HeadContent>
@@ -19,8 +19,8 @@
         <span class="eyebrow"><span class="eyebrow-dot"></span> Documentación</span>
         <h1 class="docs-title">Documentación de Open Client</h1>
         <p class="docs-lead">
-            Bienvenido al centro de documentación. Aquí encontrarás cómo instalar Open Client en local,
-            cómo desplegarlo en tu infraestructura y qué hace cada módulo del panel.
+            Aquí encontrarás cómo instalar Open Client en local, cómo desplegarlo en tu
+            infraestructura y cómo funciona el panel de clientes.
         </p>
         <nav class="docs-jump" aria-label="Secciones">
             <a href="#empezar">Empezar</a>
@@ -85,34 +85,31 @@
     </section>
 
     <section id="panel" class="docs-section">
-        <h2>El panel</h2>
+        <h2>El panel de clientes</h2>
         <p class="docs-section-lead">
-            El panel de Open Client requiere autenticación. Estas son las secciones disponibles una vez dentro.
+            Tras iniciar sesión, el panel (<code>/dashboard</code>) muestra toda la cartera de
+            clientes. Estas son sus capacidades.
         </p>
         <div class="docs-list">
             <div class="docs-list-row">
-                <span class="docs-list-name">Dashboard</span>
-                <span class="docs-list-desc">Vista general del sistema.</span>
+                <span class="docs-list-name">Listado</span>
+                <span class="docs-list-desc">Paginado de 10 en 10 sobre miles de registros, resuelto en base de datos.</span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Clientes</span>
-                <span class="docs-list-desc">Consulta y gestión comercial de tu cartera.</span>
+                <span class="docs-list-name">Búsqueda y filtros</span>
+                <span class="docs-list-desc">Texto libre (razón social, RUC, contacto, correo), filtro por industria y orden.</span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">API</span>
-                <span class="docs-list-desc">Acceso programático a los datos.</span>
+                <span class="docs-list-name">Vistas</span>
+                <span class="docs-list-desc">Lista con filas desplegables o cuadrícula de tarjetas.</span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Agente IA</span>
-                <span class="docs-list-desc">Consulta la información en lenguaje natural.</span>
+                <span class="docs-list-name">Ficha</span>
+                <span class="docs-list-desc">Cada cliente muestra sus datos fiscales, de contacto y de ubicación.</span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Tutoriales</span>
-                <span class="docs-list-desc">Guías de uso dentro del propio panel.</span>
-            </div>
-            <div class="docs-list-row">
-                <span class="docs-list-name">Configuración</span>
-                <span class="docs-list-desc">Ajustes del sistema.</span>
+                <span class="docs-list-name">Alta, edición y borrado</span>
+                <span class="docs-list-desc">Formulario con validación en servidor; el borrado es lógico y reversible.</span>
             </div>
         </div>
         <a href="/log-in" class="btn btn-primary docs-panel-cta">Entrar al panel</a>

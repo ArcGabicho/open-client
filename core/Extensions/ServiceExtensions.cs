@@ -9,10 +9,6 @@ using OpenClient.Services;
 
 namespace OpenClient.Extensions;
 
-/// <summary>
-/// Composición de la raíz de dependencias. `Program.cs` solo encadena estos
-/// métodos; cada uno agrupa un área (datos, autenticación, observabilidad).
-/// </summary>
 public static class ServiceExtensions
 {
     public static IServiceCollection AddApplicationServices(

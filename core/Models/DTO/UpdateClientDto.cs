@@ -1,6 +1,5 @@
 namespace OpenClient.Models.DTO;
 
-/// <summary>Cuerpo de <c>PUT /api/clients/{id}</c>. Reemplaza todos los campos editables.</summary>
 public record UpdateClientDto(
     string CompanyName,
     string? LegalName = null,
