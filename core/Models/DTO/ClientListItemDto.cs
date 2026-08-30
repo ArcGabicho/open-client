@@ -1,10 +1,7 @@
+using OpenClient.Models.Domain;
+
 namespace OpenClient.Models.DTO;
 
-/// <summary>
-/// Proyección ligera de <see cref="OpenClient.Models.Domain.Client"/> para
-/// el listado / tabla de clientes. Solo transporta los campos crudos que
-/// necesita la vista; las cadenas de presentación se derivan aquí en memoria.
-/// </summary>
 public sealed class ClientListItemDto
 {
     public int Id { get; init; }
@@ -36,6 +33,28 @@ public sealed class ClientListItemDto
     public string? Province { get; init; }
 
     public DateTime CreatedAt { get; init; }
+
+    public DateTime? UpdatedAt { get; init; }
+
+    public static ClientListItemDto FromEntity(Client client) => new()
+    {
+        Id = client.Id,
+        CompanyName = client.CompanyName,
+        LegalName = client.LegalName,
+        FirstName = client.FirstName,
+        LastName = client.LastName,
+        JobTitle = client.JobTitle,
+        Industry = client.Industry,
+        TaxId = client.TaxId,
+        Email = client.Email,
+        PhoneNumber = client.PhoneNumber,
+        Website = client.Website,
+        Address = client.Address,
+        District = client.District,
+        Province = client.Province,
+        CreatedAt = client.CreatedAt,
+        UpdatedAt = client.UpdatedAt
+    };
 
     // ----- Cadenas derivadas para la UI -----
 

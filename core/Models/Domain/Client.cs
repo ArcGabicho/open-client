@@ -17,4 +17,9 @@ public class Client
     public string? District { get; set; }
     public string? Province { get; set; }
     public DateTime CreatedAt { get; set; }
+
+    // Auditoría y borrado lógico
+    public DateTime? UpdatedAt { get; set; }
+    public bool IsDeleted { get; set; }
+    public DateTime? DeletedAt { get; set; }
 }

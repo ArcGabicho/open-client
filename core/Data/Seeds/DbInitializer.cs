@@ -1,51 +1,49 @@
 using Microsoft.EntityFrameworkCore;
+using OpenClient.Interfaces;
 using OpenClient.Models.Domain;
 
 namespace OpenClient.Data;
 
-public sealed class DbInitializer
+/// <inheritdoc cref="IDbInitializer" />
+public sealed class DbInitializer : IDbInitializer
 {
-    private readonly OpenClientDbContext _db;
+    private readonly IDbContextFactory<OpenClientDbContext> _contextFactory;
     private readonly ILogger<DbInitializer> _logger;
     private readonly IConfiguration _configuration;
 
     public DbInitializer(
-        OpenClientDbContext db,
+        IDbContextFactory<OpenClientDbContext> contextFactory,
         ILogger<DbInitializer> logger,
         IConfiguration configuration)
     {
-        _db = db;
+        _contextFactory = contextFactory;
         _logger = logger;
         _configuration = configuration;
     }
 
-    public async Task InitializeAsync(CancellationToken ct = default)
+    public async Task InitializeAsync(CancellationToken cancellationToken = default)
     {
         _logger.LogInformation("Iniciando base de datos...");
 
-        await ApplyMigrationsAsync(ct);
+        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
 
-        await SeedAdminAsync(ct);
-
-        await SeedClientsAsync(ct);
+        await ApplyMigrationsAsync(db, cancellationToken);
+        await SeedAdminAsync(db, cancellationToken);
+        await SeedClientsAsync(db, cancellationToken);
 
         _logger.LogInformation("Base de datos inicializada correctamente.");
     }
 
-    private async Task ApplyMigrationsAsync(CancellationToken ct)
+    private async Task ApplyMigrationsAsync(OpenClientDbContext db, CancellationToken ct)
     {
         _logger.LogInformation("Aplicando migraciones de EF Core...");
 
-        var pending = await _db.Database.GetPendingMigrationsAsync(ct);
+        var pending = (await db.Database.GetPendingMigrationsAsync(ct)).ToList();
 
-        if (pending.Any())
+        if (pending.Count > 0)
         {
-            _logger.LogInformation(
-                "Migraciones pendientes: {Count}",
-                pending.Count());
-
-            await _db.Database.MigrateAsync(ct);
-
+            _logger.LogInformation("Migraciones pendientes: {Count}", pending.Count);
+            await db.Database.MigrateAsync(ct);
             _logger.LogInformation("Migraciones aplicadas correctamente.");
         }
         else
@@ -54,41 +52,36 @@ public sealed class DbInitializer
         }
     }
 
-    private async Task SeedAdminAsync(CancellationToken ct)
+    private async Task SeedAdminAsync(OpenClientDbContext db, CancellationToken ct)
     {
         var adminEmail = _configuration["ADMIN_EMAIL"];
         var adminPassword = _configuration["ADMIN_PASSWORD"];
 
-        if (string.IsNullOrWhiteSpace(adminEmail) ||
-            string.IsNullOrWhiteSpace(adminPassword))
+        if (string.IsNullOrWhiteSpace(adminEmail) || string.IsNullOrWhiteSpace(adminPassword))
         {
             _logger.LogWarning(
                 "ADMIN_EMAIL o ADMIN_PASSWORD no definidos. " +
                 "Se omite el provisionamiento del administrador.");
-
             return;
         }
 
-        _logger.LogInformation(
-            "Verificando administrador inicial...");
+        _logger.LogInformation("Verificando administrador inicial...");
 
-        var existing = await _db.Users
+        var existing = await db.Users
             .AsNoTracking()
             .FirstOrDefaultAsync(x => x.Email == adminEmail, ct);
 
         if (existing is not null)
         {
             _logger.LogInformation(
-                "Administrador ya existe (Email={Email}). " +
-                "No se sobrescribe el hash existente.",
+                "Administrador ya existe (Email={Email}). No se sobrescribe el hash existente.",
                 adminEmail);
-
             return;
         }
 
         var hash = BCrypt.Net.BCrypt.HashPassword(adminPassword, workFactor: 12);
 
-        var admin = new User
+        db.Users.Add(new User
         {
             Email = adminEmail,
             PasswordHash = hash,
@@ -98,19 +91,16 @@ public sealed class DbInitializer
             ProfileImage = "",
             IsActive = true,
             CreatedAt = DateTime.UtcNow
-        };
+        });
 
-        _db.Users.Add(admin);
-        await _db.SaveChangesAsync(ct);
+        await db.SaveChangesAsync(ct);
 
-        _logger.LogInformation(
-            "Administrador creado correctamente (Email={Email}).",
-            adminEmail);
+        _logger.LogInformation("Administrador creado correctamente (Email={Email}).", adminEmail);
     }
 
-    private async Task SeedClientsAsync(CancellationToken ct)
+    private async Task SeedClientsAsync(OpenClientDbContext db, CancellationToken ct)
     {
-        var seeder = new DbSeeder(_db, _logger);
+        var seeder = new DbSeeder(db, _logger);
         await seeder.SeedClientsAsync(ct);
     }
 }

@@ -3,22 +3,22 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
+using OpenClient.Interfaces;
 using OpenClient.Models.DTO;
-using OpenClient.Services;
 
 namespace OpenClient.Controllers;
 
 [Route("auth")]
 public class AuthController : ControllerBase
 {
-    private readonly AuthService _authService;
+    private readonly IAuthService _authService;
 
     private readonly IAntiforgery _antiforgery;
 
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
-        AuthService authService,
+        IAuthService authService,
         IAntiforgery antiforgery,
         ILogger<AuthController> logger)
     {

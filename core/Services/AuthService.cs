@@ -1,30 +1,35 @@
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using OpenClient.Data;
+using OpenClient.Interfaces;
 using OpenClient.Models.Domain;
 using OpenClient.Models.DTO;
 
 namespace OpenClient.Services;
 
-public class AuthService
+public sealed class AuthService : IAuthService
 {
-    private readonly OpenClientDbContext _db;
+    private readonly IDbContextFactory<OpenClientDbContext> _contextFactory;
 
     private readonly ILogger<AuthService> _logger;
 
     public AuthService(
-        OpenClientDbContext db,
+        IDbContextFactory<OpenClientDbContext> contextFactory,
         ILogger<AuthService> logger)
     {
-        _db = db;
+        _contextFactory = contextFactory;
         _logger = logger;
     }
 
-    public async Task<User?> ValidateCredentialsAsync(LoginModel model)
+    public async Task<User?> ValidateCredentialsAsync(
+        LoginModel model,
+        CancellationToken cancellationToken = default)
     {
-        var user = await _db.Users
+        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+        var user = await db.Users
             .AsNoTracking()
-            .FirstOrDefaultAsync(x => x.Email == model.Email);
+            .FirstOrDefaultAsync(x => x.Email == model.Email, cancellationToken);
 
         if (user is null)
         {

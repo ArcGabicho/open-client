@@ -1,12 +1,3 @@
-/* ============================================================
-   Open Client — Public layout (MainLayout)
-   Minimalist / enterprise. Light theme, Microsoft-Fluent-leaning
-   geometry: hairline borders, squared corners, restrained depth.
-   The global .container adds 2.5rem 5rem padding and html/body
-   use overflow:hidden, so the shell cancels that frame with a
-   negative margin and owns its own scroll context.
-   ============================================================ */
-
 .public-shell {
     --bg: #ffffff;
     --bg-soft: #f5f6fa;

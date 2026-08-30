@@ -1,11 +1,3 @@
-/* ============================================================
-   Open Client — Auth layout (LoginLayout)
-   Split screen: white form panel (left) + dark enterprise
-   panel (right) with headline, feature checklist and quote.
-   Cancels the global .container padding for a full-bleed
-   layout and owns its own scroll context.
-   ============================================================ */
-
 .auth-shell {
     --bg: #ffffff;
     --bg-soft: #f5f6fa;
@@ -189,7 +181,6 @@
     }
 }
 
-/* Short viewports (landscape phones): don't vertically centre, let it scroll */
 @media (max-height: 640px) {
     .auth-form-center {
         align-items: flex-start;

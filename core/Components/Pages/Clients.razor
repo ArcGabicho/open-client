@@ -220,13 +220,13 @@
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9zM14 3v6h6M8 13h8M8 17h5" /></svg>
                                                 Ver ficha
                                             </button>
-                                            <button type="button" class="acc-act @(notes.ContainsKey(c.Id) ? "acc-act-has" : null)" @onclick="() => OpenNotes(c)">
-                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16M4 12h16M4 19h10" /></svg>
-                                                @(notes.ContainsKey(c.Id) ? "Notas (1)" : "Notas")
-                                            </button>
                                             <button type="button" class="acc-act" @onclick="() => OpenEdit(c)">
                                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4l10.5-10.5a2.1 2.1 0 0 0-3-3L5 17v3z" /></svg>
                                                 Editar
+                                            </button>
+                                            <button type="button" class="acc-act acc-act-danger" @onclick="() => OpenDelete(c)">
+                                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13" /></svg>
+                                                Eliminar
                                             </button>
                                         </div>
                                     </div>
@@ -274,8 +274,8 @@
                                 <div><dt>Alta</dt><dd>@c.CreatedAt.ToString("dd/MM/yyyy")</dd></div>
                             </dl>
                             <div class="row-actions">
-                                <button type="button" class="chip-btn chip-btn-notes" @onclick="() => OpenNotes(c)">Notas</button>
                                 <button type="button" class="chip-btn chip-btn-view" @onclick="() => OpenDetail(c)">Ver</button>
+                                <button type="button" class="chip-btn chip-btn-danger" @onclick="() => OpenDelete(c)">Eliminar</button>
                             </div>
                         </article>
                     }
@@ -434,6 +434,7 @@
                     </dl>
                 </div>
                 <div class="modal-foot">
+                    <button type="button" class="mbtn mbtn-danger" @onclick="() => OpenDelete(d)">Eliminar</button>
                     <button type="button" class="mbtn" @onclick="CloseModals">Cerrar</button>
                     <button type="button" class="mbtn mbtn-primary" @onclick="() => OpenEdit(d)">Editar</button>
                 </div>
@@ -441,25 +442,29 @@
         </div>
     }
 
-    @* ---------- Modal: notas ---------- *@
-    @if (notesClient is { } n)
+    @* ---------- Modal: confirmar eliminación ---------- *@
+    @if (deleteTarget is { } t)
     {
         <div class="modal-overlay" @onclick="CloseModals">
-            <div class="modal modal-sm" role="dialog" aria-modal="true" @onclick:stopPropagation="true">
+            <div class="modal modal-sm" role="alertdialog" aria-modal="true" @onclick:stopPropagation="true">
                 <div class="modal-head">
-                    <h2>Notas · @n.DisplayName</h2>
+                    <h2>Eliminar cliente</h2>
                     <button type="button" class="modal-close" @onclick="CloseModals" aria-label="Cerrar">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
                     </button>
                 </div>
                 <div class="modal-body">
-                    <textarea class="modal-textarea" rows="6" @bind="notesDraft"
-                              placeholder="Escribe una nota interna sobre este cliente…"></textarea>
-                    <p class="modal-hint">Las notas se guardan solo durante esta sesión.</p>
+                    <p class="modal-confirm">
+                        ¿Seguro que quieres eliminar <strong>@t.DisplayName</strong>?
+                        Se marcará como borrado y dejará de aparecer en el listado
+                        (borrado lógico, reversible en base de datos).
+                    </p>
                 </div>
                 <div class="modal-foot">
-                    <button type="button" class="mbtn" @onclick="CloseModals">Cancelar</button>
-                    <button type="button" class="mbtn mbtn-primary" @onclick="SaveNotes">Guardar nota</button>
+                    <button type="button" class="mbtn" @onclick="CloseModals" disabled="@deleting">Cancelar</button>
+                    <button type="button" class="mbtn mbtn-danger" @onclick="ConfirmDeleteAsync" disabled="@deleting">
+                        @(deleting ? "Eliminando…" : "Eliminar")
+                    </button>
                 </div>
             </div>
         </div>
@@ -486,9 +491,8 @@
     private bool saving;
 
     private ClientListItemDto? detailClient;
-    private ClientListItemDto? notesClient;
-    private string notesDraft = string.Empty;
-    private readonly Dictionary<int, string> notes = new();
+    private ClientListItemDto? deleteTarget;
+    private bool deleting;
 
     private void Toggle(int id) =>
         expandedId = expandedId == id ? null : id;
@@ -512,36 +516,39 @@
 
     private void OpenDetail(ClientListItemDto client) => detailClient = client;
 
-    private void OpenNotes(ClientListItemDto client)
+    private void OpenDelete(ClientListItemDto client)
     {
-        notesClient = client;
-        notesDraft = notes.GetValueOrDefault(client.Id, string.Empty);
+        deleteTarget = client;
+        detailClient = null;
     }
 
-    private void SaveNotes()
+    private async Task ConfirmDeleteAsync()
     {
-        if (notesClient is { } client)
+        if (deleteTarget is not { } client)
         {
-            var text = notesDraft?.Trim() ?? string.Empty;
-
-            if (text.Length == 0)
-            {
-                notes.Remove(client.Id);
-            }
-            else
-            {
-                notes[client.Id] = text;
-            }
+            return;
         }
 
-        notesClient = null;
+        deleting = true;
+        StateHasChanged();
+
+        try
+        {
+            await ClientService.DeleteAsync(client.Id);
+            deleteTarget = null;
+            await LoadAsync();
+        }
+        finally
+        {
+            deleting = false;
+        }
     }
 
     private void CloseModals()
     {
         showForm = false;
         detailClient = null;
-        notesClient = null;
+        deleteTarget = null;
     }
 
     private async Task SaveFormAsync()

@@ -112,6 +112,35 @@ No es necesario ejecutar `dotnet ef database update` manualmente.
 
 **Nunca usar `EnsureCreated()`**. Siempre usar migraciones.
 
+### Contexto y fabrica
+
+En runtime se registra `AddDbContextFactory<OpenClientDbContext>` (no un
+`DbContext` scoped): cada operacion abre su propio contexto con
+`IDbContextFactory.CreateDbContextAsync(ct)`. Para que `dotnet ef` funcione con
+ese registro existe `core/Data/Context/OpenClientDbContextFactory.cs`
+(`IDesignTimeDbContextFactory`), que crea el contexto leyendo
+`ConnectionStrings__DefaultConnection` del entorno.
+
+---
+
+## 3b. Borrado logico y auditoria
+
+La entidad `Client` incluye:
+
+| Campo | Tipo | Uso |
+| --- | --- | --- |
+| `UpdatedAt` | `datetime2` nullable | Lo fija `ClientService.UpdateAsync` en cada edicion. |
+| `IsDeleted` | `bit`, default `0` | Borrado logico. Indice `IX_Clients_IsDeleted`. |
+| `DeletedAt` | `datetime2` nullable | Momento del borrado. |
+
+- `DELETE /api/clients/{id}` y el boton "Eliminar" del panel hacen **borrado
+  logico**: `IsDeleted = 1`, `DeletedAt = UtcNow`. La fila permanece en la tabla.
+- Todas las lecturas del repositorio filtran `!IsDeleted` de forma explicita (no
+  hay `HasQueryFilter` global).
+- Restaurar un cliente borrado se hace en base de datos
+  (`UPDATE Clients SET IsDeleted = 0, DeletedAt = NULL WHERE Id = ...`).
+- Migracion: `Data/Migrations/*_AddClientSoftDeleteAndAudit.cs`.
+
 ---
 
 ## 4. Administrador initial

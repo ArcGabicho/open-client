@@ -532,12 +532,17 @@
     box-shadow: var(--ring);
 }
 
-.acc-act-has {
-    border-color: var(--accent);
-    color: var(--accent);
+.acc-act-danger {
+    color: #b42318;
 }
 
-/* ---------- Modals (nuevo / editar / ficha / notas) ---------- */
+.acc-act-danger:hover {
+    background: rgba(209, 73, 91, 0.1);
+    color: #b42318;
+    border-color: rgba(209, 73, 91, 0.35);
+}
+
+/* ---------- Modals (nuevo / editar / ficha / eliminar) ---------- */
 
 .modal-overlay {
     position: fixed;
@@ -689,30 +694,15 @@
     box-shadow: var(--ring);
 }
 
-.modal-textarea {
-    width: 100%;
-    font: inherit;
+.modal-confirm {
+    margin: 0;
     font-size: 0.9rem;
-    line-height: 1.5;
-    padding: 0.7rem 0.8rem;
-    border: 1px solid var(--border-strong);
-    border-radius: var(--radius-sm);
-    background: var(--bg);
+    line-height: 1.6;
+    color: var(--text-soft);
+}
+
+.modal-confirm strong {
     color: var(--text);
-    outline: none;
-    resize: vertical;
-    min-height: 8rem;
-}
-
-.modal-textarea:focus {
-    border-color: var(--accent);
-    box-shadow: var(--ring);
-}
-
-.modal-hint {
-    margin: 0.6rem 0 0;
-    font-size: 0.76rem;
-    color: var(--text-mute);
 }
 
 .modal-error {
@@ -752,6 +742,19 @@
 .mbtn-primary:hover:not(:disabled) {
     background: var(--accent-hover);
     border-color: var(--accent-hover);
+    color: #fff;
+}
+
+.mbtn-danger {
+    background: #d1495b;
+    border-color: #d1495b;
+    color: #fff;
+    margin-right: auto;
+}
+
+.mbtn-danger:hover:not(:disabled) {
+    background: #b93c4d;
+    border-color: #b93c4d;
     color: #fff;
 }
 
@@ -838,22 +841,22 @@
     transition: background 0.15s ease, color 0.15s ease;
 }
 
-.chip-btn-notes {
-    background: var(--accent-soft);
-    color: var(--accent);
-}
-
-.chip-btn-notes:hover {
-    background: #e6e3ff;
-}
-
 .chip-btn-view {
-    background: var(--bg-soft);
+    background: var(--accent-soft);
     color: var(--accent);
 }
 
 .chip-btn-view:hover {
-    background: var(--accent-soft);
+    background: #e6e3ff;
+}
+
+.chip-btn-danger {
+    background: var(--bg-soft);
+    color: #b42318;
+}
+
+.chip-btn-danger:hover {
+    background: rgba(209, 73, 91, 0.12);
 }
 
 .chip-btn:focus-visible {

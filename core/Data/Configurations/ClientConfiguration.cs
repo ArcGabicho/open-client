@@ -56,5 +56,17 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
 
         builder.Property(client => client.CreatedAt)
             .IsRequired();
+
+        builder.Property(client => client.UpdatedAt)
+            .IsRequired(false);
+
+        builder.Property(client => client.IsDeleted)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        builder.Property(client => client.DeletedAt)
+            .IsRequired(false);
+
+        builder.HasIndex(client => client.IsDeleted);
     }
 }

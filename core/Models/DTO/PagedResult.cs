@@ -1,8 +1,5 @@
 namespace OpenClient.Models.DTO;
 
-/// <summary>
-/// Resultado paginado genérico devuelto por la capa de servicios.
-/// </summary>
 public sealed class PagedResult<T>
 {
     public IReadOnlyList<T> Items { get; init; } = [];

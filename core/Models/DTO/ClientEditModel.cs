@@ -1,9 +1,5 @@
 namespace OpenClient.Models.DTO;
 
-/// <summary>
-/// Datos editables de un cliente. Se usa tanto para crear ("Nuevo cliente")
-/// como para actualizar ("Editar") desde el panel.
-/// </summary>
 public sealed class ClientEditModel
 {
     public string? CompanyName { get; set; }

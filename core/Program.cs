@@ -1,54 +1,47 @@
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using openclient.Components;
-using OpenClient.Data;
+using OpenClient.Extensions;
 using OpenClient.Interfaces;
-using OpenClient.Services;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// ---------- Logging (Serilog) ----------
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration
+        .MinimumLevel.Information()
+        .MinimumLevel.Override("Microsoft.AspNetCore", Serilog.Events.LogEventLevel.Warning)
+        .Enrich.FromLogContext()
+        .WriteTo.Console()
+        .WriteTo.File(
+            "logs/openclient-.log",
+            rollingInterval: RollingInterval.Day,
+            retainedFileCountLimit: 7);
+});
+
+// ---------- Servicios ----------
 builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddDbContext<OpenClientDbContext>(options =>
-    options.UseSqlServer(
-        builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddApplicationServices(builder.Configuration);
+builder.Services.AddCookieAuthentication();
+builder.Services.AddObservability();
 
-builder.Services.AddScoped<AuthService>();
-builder.Services.AddScoped<DbInitializer>();
-builder.Services.AddScoped<IClientService, ClientService>();
-
-builder.Services
-    .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-    .AddCookie(options =>
-    {
-        options.LoginPath = "/log-in";
-        options.AccessDeniedPath = "/access-denied";
-        options.ExpireTimeSpan = TimeSpan.FromHours(8);
-        options.SlidingExpiration = true;
-
-        options.Cookie.Name = ".OpenClient.Auth";
-        options.Cookie.HttpOnly = true;
-        options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
-        options.Cookie.IsEssential = true;
-    });
-
-builder.Services.AddAuthorization();
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
 
 var app = builder.Build();
 
+// ---------- Inicialización de la base de datos ----------
 using (var scope = app.Services.CreateScope())
 {
-    var initializer =
-        scope.ServiceProvider.GetRequiredService<DbInitializer>();
-
+    var initializer = scope.ServiceProvider.GetRequiredService<IDbInitializer>();
     await initializer.InitializeAsync();
 }
 
+// ---------- Pipeline ----------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
@@ -56,17 +49,21 @@ if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.UseSerilogRequestLogging();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.UseStatusCodePagesWithReExecute(
-    "/not-found",
-    createScopeForStatusCodePages: true);
-
+app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseAntiforgery();
 
-app.MapStaticAssets();
+app.MapHealthChecks("/health");
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready")
+});
 
+app.MapStaticAssets();
 app.MapControllers();
 
 app.MapRazorComponents<App>()

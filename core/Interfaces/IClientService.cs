@@ -3,39 +3,42 @@ using OpenClient.Models.DTO;
 namespace OpenClient.Interfaces;
 
 /// <summary>
-/// Acceso al catálogo de clientes. La consulta (paginación, filtrado y
-/// orden) se resuelve en la base de datos (SQL Server); la creación y la
-/// edición persisten mediante EF Core.
+/// Caso de uso del catálogo de clientes. Orquesta el repositorio
+/// (<see cref="OpenClient.Data.Repositories.IClientRepository"/>), la
+/// validación con FluentValidation y el mapeo a DTO. No accede a EF Core
+/// directamente.
 /// </summary>
 public interface IClientService
 {
-    /// <summary>
-    /// Devuelve una página del listado de clientes aplicando los filtros
-    /// indicados. El conteo total corresponde al universo filtrado, no a
-    /// la página.
-    /// </summary>
+    /// <summary>Página del listado, con búsqueda, filtro de industria y orden.</summary>
     Task<PagedResult<ClientListItemDto>> GetClientsAsync(
         ClientSearchFilter filter,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Lista las industrias distintas presentes en la tabla de clientes,
-    /// ordenadas alfabéticamente, para poblar el filtro correspondiente.
-    /// </summary>
+    /// <summary>Un cliente por id, o <c>null</c> si no existe o está borrado.</summary>
+    Task<ClientListItemDto?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Industrias distintas normalizadas (para el filtro y el autocompletado).</summary>
     Task<IReadOnlyList<string>> GetIndustriesAsync(
         CancellationToken cancellationToken = default);
 
-    /// <summary>Crea un cliente y devuelve su identificador.</summary>
+    /// <summary>Valida y crea un cliente. Devuelve su id.</summary>
+    /// <exception cref="FluentValidation.ValidationException">Si el modelo no es válido.</exception>
     Task<int> CreateAsync(
         ClientEditModel model,
         CancellationToken cancellationToken = default);
 
-    /// <summary>
-    /// Actualiza los datos de un cliente existente. Devuelve <c>false</c>
-    /// si el identificador no existe.
-    /// </summary>
+    /// <summary>Valida y actualiza un cliente. Devuelve <c>false</c> si no existe.</summary>
+    /// <exception cref="FluentValidation.ValidationException">Si el modelo no es válido.</exception>
     Task<bool> UpdateAsync(
         int id,
         ClientEditModel model,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>Borrado lógico. Devuelve <c>false</c> si no existe o ya estaba borrado.</summary>
+    Task<bool> DeleteAsync(
+        int id,
         CancellationToken cancellationToken = default);
 }

@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using OpenClient.Data;
+using FluentValidation;
+using OpenClient.Data.Repositories;
 using OpenClient.Interfaces;
 using OpenClient.Models.Domain;
 using OpenClient.Models.DTO;
@@ -9,15 +9,17 @@ namespace OpenClient.Services;
 /// <inheritdoc cref="IClientService" />
 public sealed class ClientService : IClientService
 {
-    private readonly OpenClientDbContext _db;
-
+    private readonly IClientRepository _repository;
+    private readonly IValidator<ClientEditModel> _validator;
     private readonly ILogger<ClientService> _logger;
 
     public ClientService(
-        OpenClientDbContext db,
+        IClientRepository repository,
+        IValidator<ClientEditModel> validator,
         ILogger<ClientService> logger)
     {
-        _db = db;
+        _repository = repository;
+        _validator = validator;
         _logger = logger;
     }
 
@@ -25,66 +27,36 @@ public sealed class ClientService : IClientService
         ClientSearchFilter filter,
         CancellationToken cancellationToken = default)
     {
-        var query = _db.Clients.AsNoTracking();
-
-        query = ApplySearch(query, filter.Search);
-        query = ApplyIndustry(query, filter.Industry);
-
-        var totalCount = await query.CountAsync(cancellationToken);
-
-        query = ApplySort(query, filter.SortBy);
-
-        var items = await query
-            .Skip((filter.Page - 1) * filter.PageSize)
-            .Take(filter.PageSize)
-            .Select(client => new ClientListItemDto
-            {
-                Id = client.Id,
-                CompanyName = client.CompanyName,
-                LegalName = client.LegalName,
-                FirstName = client.FirstName,
-                LastName = client.LastName,
-                JobTitle = client.JobTitle,
-                Industry = client.Industry,
-                TaxId = client.TaxId,
-                Email = client.Email,
-                PhoneNumber = client.PhoneNumber,
-                Website = client.Website,
-                Address = client.Address,
-                District = client.District,
-                Province = client.Province,
-                CreatedAt = client.CreatedAt
-            })
-            .ToListAsync(cancellationToken);
+        var (items, totalCount) = await _repository.GetPagedAsync(filter, cancellationToken);
 
         _logger.LogInformation(
             "Listado de clientes: página {Page} ({PageSize}/pág) · {Returned} de {Total} tras filtros.",
-            filter.Page,
-            filter.PageSize,
-            items.Count,
-            totalCount);
+            filter.Page, filter.PageSize, items.Count, totalCount);
 
         return new PagedResult<ClientListItemDto>
         {
-            Items = items,
+            Items = items.Select(ClientListItemDto.FromEntity).ToList(),
             Page = filter.Page,
             PageSize = filter.PageSize,
             TotalCount = totalCount
         };
     }
 
+    public async Task<ClientListItemDto?> GetByIdAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var client = await _repository.GetByIdAsync(id, cancellationToken);
+        return client is null ? null : ClientListItemDto.FromEntity(client);
+    }
+
     public async Task<IReadOnlyList<string>> GetIndustriesAsync(
         CancellationToken cancellationToken = default)
     {
-        var raw = await _db.Clients
-            .AsNoTracking()
-            .Where(client => client.Industry != null && client.Industry != "")
-            .Select(client => client.Industry!)
-            .Distinct()
-            .ToListAsync(cancellationToken);
+        var raw = await _repository.GetRawIndustriesAsync(cancellationToken);
 
-        // Normaliza en memoria: descarta valores en blanco y colapsa
-        // duplicados que solo difieren en espacios o mayúsculas.
+        // Normaliza en memoria: recorta, descarta vacíos y colapsa duplicados
+        // que solo difieren en espacios o mayúsculas.
         return raw
             .Select(industry => industry.Trim())
             .Where(industry => industry.Length > 0)
@@ -97,14 +69,14 @@ public sealed class ClientService : IClientService
         ClientEditModel model,
         CancellationToken cancellationToken = default)
     {
+        await _validator.ValidateAndThrowAsync(model, cancellationToken);
+
         var client = new Client { CreatedAt = DateTime.UtcNow };
         Apply(model, client);
 
-        _db.Clients.Add(client);
-        await _db.SaveChangesAsync(cancellationToken);
-
-        _logger.LogInformation("Cliente creado: Id={ClientId}.", client.Id);
-        return client.Id;
+        var id = await _repository.AddAsync(client, cancellationToken);
+        _logger.LogInformation("Cliente creado desde el panel: Id={ClientId}.", id);
+        return id;
     }
 
     public async Task<bool> UpdateAsync(
@@ -112,20 +84,34 @@ public sealed class ClientService : IClientService
         ClientEditModel model,
         CancellationToken cancellationToken = default)
     {
-        var client = await _db.Clients
-            .FirstOrDefaultAsync(entity => entity.Id == id, cancellationToken);
+        await _validator.ValidateAndThrowAsync(model, cancellationToken);
 
-        if (client is null)
+        var updated = await _repository.UpdateAsync(id, client =>
         {
-            _logger.LogWarning("Edición ignorada: no existe el cliente Id={ClientId}.", id);
-            return false;
+            Apply(model, client);
+            client.UpdatedAt = DateTime.UtcNow;
+        }, cancellationToken);
+
+        if (!updated)
+        {
+            _logger.LogWarning("Actualización sin efecto: cliente Id={ClientId} inexistente.", id);
         }
 
-        Apply(model, client);
-        await _db.SaveChangesAsync(cancellationToken);
+        return updated;
+    }
 
-        _logger.LogInformation("Cliente actualizado: Id={ClientId}.", id);
-        return true;
+    public async Task<bool> DeleteAsync(
+        int id,
+        CancellationToken cancellationToken = default)
+    {
+        var deleted = await _repository.SoftDeleteAsync(id, cancellationToken);
+
+        if (!deleted)
+        {
+            _logger.LogWarning("Borrado sin efecto: cliente Id={ClientId} inexistente.", id);
+        }
+
+        return deleted;
     }
 
     private static void Apply(ClientEditModel model, Client client)
@@ -147,59 +133,4 @@ public sealed class ClientService : IClientService
 
     private static string? Clean(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
-
-    private static IQueryable<Client> ApplySearch(
-        IQueryable<Client> query,
-        string? search)
-    {
-        if (string.IsNullOrWhiteSpace(search))
-        {
-            return query;
-        }
-
-        var pattern = $"%{search.Trim()}%";
-
-        return query.Where(client =>
-            (client.CompanyName != null && EF.Functions.Like(client.CompanyName, pattern)) ||
-            (client.LegalName != null && EF.Functions.Like(client.LegalName, pattern)) ||
-            (client.FirstName != null && EF.Functions.Like(client.FirstName, pattern)) ||
-            (client.LastName != null && EF.Functions.Like(client.LastName, pattern)) ||
-            (client.Email != null && EF.Functions.Like(client.Email, pattern)) ||
-            (client.TaxId != null && EF.Functions.Like(client.TaxId, pattern)));
-    }
-
-    private static IQueryable<Client> ApplyIndustry(
-        IQueryable<Client> query,
-        string? industry)
-    {
-        if (string.IsNullOrWhiteSpace(industry))
-        {
-            return query;
-        }
-
-        // Compara sin espacios sobrantes: los valores de la lista vienen
-        // normalizados pero la columna puede tenerlos.
-        var value = industry.Trim();
-
-        return query.Where(client =>
-            client.Industry != null && client.Industry.Trim() == value);
-    }
-
-    private static IQueryable<Client> ApplySort(
-        IQueryable<Client> query,
-        string? sortBy)
-    {
-        return sortBy switch
-        {
-            "name" => query
-                .OrderBy(client => client.CompanyName)
-                .ThenBy(client => client.Id),
-            "oldest" => query
-                .OrderBy(client => client.CreatedAt)
-                .ThenBy(client => client.Id),
-            _ => query
-                .OrderByDescending(client => client.CreatedAt)
-                .ThenByDescending(client => client.Id)
-        };
-    }
 }
