@@ -83,6 +83,8 @@ public class AuthController : ControllerBase
                 IsPersistent = false
             });
 
+        await _authService.RecordSuccessfulLoginAsync(user.Id, HttpContext.RequestAborted);
+
         _logger.LogInformation(
             "Sesion iniciada para UserId={UserId} via cookie.",
             user.Id);

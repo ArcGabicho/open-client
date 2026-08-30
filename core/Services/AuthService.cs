@@ -100,8 +100,35 @@ public sealed class AuthService : IAuthService
                 user.Email),
 
             new Claim(
+                ClaimTypes.GivenName,
+                user.FirstName ?? string.Empty),
+
+            new Claim(
+                ClaimTypes.Surname,
+                user.LastName ?? string.Empty),
+
+            new Claim(
                 ClaimTypes.Role,
                 user.Role)
         };
+    }
+
+    public async Task RecordSuccessfulLoginAsync(
+        int userId,
+        CancellationToken cancellationToken = default)
+    {
+        await using var db = await _contextFactory.CreateDbContextAsync(cancellationToken);
+
+        var updated = await db.Users
+            .Where(u => u.Id == userId)
+            .ExecuteUpdateAsync(
+                set => set.SetProperty(u => u.LastLoginAt, DateTime.UtcNow),
+                cancellationToken);
+
+        if (updated == 0)
+        {
+            _logger.LogWarning(
+                "No se pudo sellar el último acceso: UserId={UserId} no encontrado.", userId);
+        }
     }
 }

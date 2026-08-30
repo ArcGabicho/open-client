@@ -2,4 +2,157 @@
 @layout DashboardLayout
 @attribute [Authorize]
 
+@using OpenClient.Api
+@using OpenClient.Models.Api
+
 <PageTitle>Open Client | Panel de Integraciones</PageTitle>
+
+<div class="integrations">
+
+    <header class="integrations-hero">
+        <div class="integrations-hero-text">
+            <span class="integrations-eyebrow">API de Integración</span>
+            <h1 class="integrations-title">Consulta la cartera de clientes desde tus sistemas</h1>
+            <p class="integrations-lead">
+                Una API REST versionada y de <strong>solo lectura</strong> sobre la misma base de
+                datos comercial. Reutiliza la sesión de ASP.NET Core: cada petición debe estar
+                autenticada y autorizada. Es independiente del panel administrativo y no altera el
+                CRUD existente.
+            </p>
+        </div>
+        <div class="integrations-hero-actions">
+            <a href="/openapi/v1.json" target="_blank" rel="noopener" class="integrations-cta">
+                Especificación OpenAPI
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M7 17 17 7M9 7h8v8" />
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <section class="integrations-cards" aria-label="Resumen del contrato">
+        <div class="integrations-card">
+            <span class="integrations-card-label">URL base</span>
+            <code class="integrations-card-value">/api/v1</code>
+            <p class="integrations-card-note">Versionada. Las versiones futuras (v2+) añadirán escritura sin romper v1.</p>
+        </div>
+        <div class="integrations-card">
+            <span class="integrations-card-label">Autenticación</span>
+            <span class="integrations-card-value">Sesión de ASP.NET Core</span>
+            <p class="integrations-card-note">Sin sistema paralelo. Preparada para sumar API Keys como mecanismo independiente.</p>
+        </div>
+        <div class="integrations-card">
+            <span class="integrations-card-label">Formato</span>
+            <span class="integrations-card-value">application/json</span>
+            <p class="integrations-card-note">Propiedades en <code>camelCase</code>, según las convenciones del proyecto.</p>
+        </div>
+        <div class="integrations-card">
+            <span class="integrations-card-label">Paginación</span>
+            <span class="integrations-card-value">@ApiPaging.DefaultPageSize por página</span>
+            <p class="integrations-card-note">
+                <code>page &ge; 1</code>, <code>1 &le; pageSize &le; @ApiPaging.MaxPageSize</code>.
+                Fuera de rango &rarr; <code>400</code>.
+            </p>
+        </div>
+    </section>
+
+    <section class="integrations-section">
+        <h2 class="integrations-section-title">Autorización</h2>
+        <ul class="integrations-status-list">
+            <li><span class="integrations-badge integrations-badge--401">401</span> Petición no autenticada. No hay redirección al HTML de login.</li>
+            <li><span class="integrations-badge integrations-badge--403">403</span> Autenticada pero sin un rol habilitado para la API.</li>
+            <li><span class="integrations-badge integrations-badge--200">200</span> Autenticada y autorizada.</li>
+        </ul>
+        <p class="integrations-section-note">
+            Roles habilitados hoy: @string.Join(", ", ApiV1.AllowedRoles).
+        </p>
+    </section>
+
+    <section class="integrations-section">
+        <h2 class="integrations-section-title">Endpoints</h2>
+
+        <article class="integrations-endpoint">
+            <header class="integrations-endpoint-head">
+                <span class="integrations-method">GET</span>
+                <code class="integrations-route">/api/v1/clients</code>
+            </header>
+            <p class="integrations-endpoint-desc">Lista paginada de clientes, ordenada por fecha de alta descendente.</p>
+            <div class="integrations-params">
+                <span class="integrations-param"><code>page</code> — entero &ge; 1 (por defecto 1)</span>
+                <span class="integrations-param"><code>pageSize</code> — 1..@ApiPaging.MaxPageSize (por defecto @ApiPaging.DefaultPageSize)</span>
+            </div>
+        </article>
+
+        <article class="integrations-endpoint">
+            <header class="integrations-endpoint-head">
+                <span class="integrations-method">GET</span>
+                <code class="integrations-route">/api/v1/clients/{id}</code>
+            </header>
+            <p class="integrations-endpoint-desc">Un cliente por identificador. <code>200</code> si existe, <code>404</code> si no.</p>
+        </article>
+
+        <article class="integrations-endpoint">
+            <header class="integrations-endpoint-head">
+                <span class="integrations-method">GET</span>
+                <code class="integrations-route">/api/v1/clients/search</code>
+            </header>
+            <p class="integrations-endpoint-desc">Búsqueda comercial con filtros opcionales y combinables, resueltos en SQL Server.</p>
+            <div class="integrations-params">
+                <span class="integrations-param"><code>search</code></span>
+                <span class="integrations-param"><code>companyName</code></span>
+                <span class="integrations-param"><code>legalName</code></span>
+                <span class="integrations-param"><code>industry</code></span>
+                <span class="integrations-param"><code>province</code></span>
+                <span class="integrations-param"><code>district</code></span>
+                <span class="integrations-param"><code>jobTitle</code></span>
+                <span class="integrations-param"><code>taxId</code></span>
+                <span class="integrations-param"><code>page</code></span>
+                <span class="integrations-param"><code>pageSize</code></span>
+            </div>
+            <p class="integrations-endpoint-example">
+                <code>/api/v1/clients/search?industry=Technology&amp;province=Lima&amp;district=Miraflores&amp;page=1&amp;pageSize=25</code>
+            </p>
+        </article>
+    </section>
+
+    <section class="integrations-section integrations-section--split">
+        <div>
+            <h2 class="integrations-section-title">Respuesta paginada</h2>
+            <pre class="integrations-code"><code>{
+  "data": [ /* ApiClientDto */ ],
+  "pagination": {
+    "page": 1,
+    "pageSize": 25,
+    "totalItems": 4040,
+    "totalPages": 162
+  }
+}</code></pre>
+        </div>
+        <div>
+            <h2 class="integrations-section-title">Formato de error</h2>
+            <pre class="integrations-code"><code>{
+  "error": {
+    "code": "client_not_found",
+    "message": "The requested client was not found."
+  }
+}</code></pre>
+            <p class="integrations-section-note">
+                Nunca se exponen stack traces, excepciones internas, cadenas de conexión ni SQL.
+            </p>
+        </div>
+    </section>
+
+    <section class="integrations-section">
+        <h2 class="integrations-section-title">Hoja de ruta</h2>
+        <div class="integrations-roadmap">
+            <div class="integrations-roadmap-item integrations-roadmap-item--now">
+                <span class="integrations-roadmap-tag">v1 · disponible</span>
+                <p>API de lectura: <code>clients</code>, <code>clients/{id}</code>, <code>clients/search</code>.</p>
+            </div>
+            <div class="integrations-roadmap-item">
+                <span class="integrations-roadmap-tag">v2+ · previsto</span>
+                <p>Escritura (POST/PUT/PATCH/DELETE), API Keys, rate limiting, webhooks, logs y métricas de uso.</p>
+            </div>
+        </div>
+    </section>
+</div>

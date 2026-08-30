@@ -1,5 +1,435 @@
 @page "/dashboard/analytics"
 @layout DashboardLayout
 @attribute [Authorize]
+@rendermode InteractiveServer
+@implements IDisposable
+
+@using OpenClient.Interfaces
+@using OpenClient.Models.DTO.Analytics
+@inject IAnalyticsService AnalyticsService
+@inject ILogger<Analytics> Logger
 
 <PageTitle>Open Client | Panel de Analíticas</PageTitle>
+
+<div class="analytics">
+
+    <header class="an-head">
+        <div class="an-head-titles">
+            <h1 class="an-title">Analíticas</h1>
+            <p class="an-sub">@PeriodCaption</p>
+        </div>
+        <button type="button" class="an-refresh" @onclick="RefreshAsync" disabled="@(phase == Phase.Loading)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 12a9 9 0 1 1-3-6.7M21 4v5h-5" />
+            </svg>
+            Actualizar
+        </button>
+    </header>
+
+    <section class="an-periods" aria-label="Período">
+        @foreach (var option in Presets)
+        {
+            <button type="button"
+                    class="an-chip @(preset == option ? "is-active" : null)"
+                    @onclick="() => SelectPresetAsync(option)">
+                @PresetLabel(option)
+            </button>
+        }
+
+        @if (preset == PeriodPreset.Custom)
+        {
+            <div class="an-custom">
+                <input type="date" @bind="customFrom" aria-label="Desde" />
+                <span>—</span>
+                <input type="date" @bind="customTo" aria-label="Hasta" />
+                <button type="button" class="an-chip is-apply" @onclick="RefreshAsync">Aplicar</button>
+            </div>
+        }
+    </section>
+
+    @if (phase == Phase.Loading)
+    {
+        <div class="an-state">
+            <span class="an-spinner" aria-hidden="true"></span>
+            <p>Cargando analíticas…</p>
+        </div>
+    }
+    else if (phase == Phase.Error)
+    {
+        <div class="an-state an-state--error">
+            <p>@errorMessage</p>
+            <button type="button" class="an-chip" @onclick="RefreshAsync">Reintentar</button>
+        </div>
+    }
+    else if (data is null || data.Overview.TotalClients == 0)
+    {
+        <div class="an-state">
+            <p>Todavía no hay clientes en el sistema.</p>
+        </div>
+    }
+    else
+    {
+        <section class="an-cards" aria-label="Resumen">
+            <div class="an-card">
+                <span class="an-card-label">Total de clientes</span>
+                <span class="an-card-value">@Num(data.Overview.TotalClients)</span>
+                <span class="an-card-foot">Cartera completa</span>
+            </div>
+            <div class="an-card">
+                <span class="an-card-label">Nuevos clientes</span>
+                <span class="an-card-value">@Num(data.Overview.NewClients.Value)</span>
+                <span class="an-card-foot">@ChangeCaption(data.Overview.NewClients.PercentageChange)</span>
+            </div>
+            <div class="an-card">
+                <span class="an-card-label">Con teléfono</span>
+                <span class="an-card-value">@Num(data.Overview.ClientsWithPhone)</span>
+                <span class="an-card-foot">@PctOf(data.Overview.ClientsWithPhone)</span>
+            </div>
+            <div class="an-card">
+                <span class="an-card-label">Con email</span>
+                <span class="an-card-value">@Num(data.Overview.ClientsWithEmail)</span>
+                <span class="an-card-foot">@PctOf(data.Overview.ClientsWithEmail)</span>
+            </div>
+            <div class="an-card">
+                <span class="an-card-label">Con website</span>
+                <span class="an-card-value">@Num(data.Overview.ClientsWithWebsite)</span>
+                <span class="an-card-foot">@PctOf(data.Overview.ClientsWithWebsite)</span>
+            </div>
+        </section>
+
+        @if (PeriodIsEmpty)
+        {
+            <div class="an-state an-state--muted">
+                <p>No data available for the selected period.</p>
+            </div>
+        }
+        else
+        {
+            <section class="an-panel">
+                <h2 class="an-panel-title">Clientes registrados por @BucketNoun</h2>
+                @{
+                    var maxGrowth = data.Growth.Count == 0 ? 0L : data.Growth.Max(p => p.Value);
+                }
+                @if (maxGrowth == 0)
+                {
+                    <p class="an-empty-line">No data available for the selected period.</p>
+                }
+                else
+                {
+                    <div class="an-bars" role="img" aria-label="Serie de altas por período">
+                        @foreach (var point in data.Growth)
+                        {
+                            <div class="an-bar-col" title="@point.Period: @Num(point.Value)">
+                                <div class="an-bar" style="height: @Height(point.Value, maxGrowth)"></div>
+                                <span class="an-bar-x">@ShortPeriod(point.Period)</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </section>
+
+            <section class="an-panel">
+                <h2 class="an-panel-title">Clientes por industria</h2>
+                <DistributionList Items="data.Industries" />
+            </section>
+
+            <section class="an-panel an-panel--split">
+                <div>
+                    <h2 class="an-panel-title">Clientes por provincia</h2>
+                    <DistributionList Items="data.Provinces"
+                                      Selected="selectedProvince"
+                                      OnSelect="OnProvinceSelectedAsync" />
+                </div>
+                <div>
+                    <h2 class="an-panel-title">
+                        Clientes por distrito
+                        @if (selectedProvince is not null)
+                        {
+                            <button type="button" class="an-inline-clear" @onclick="ClearProvinceAsync">
+                                @selectedProvince ✕
+                            </button>
+                        }
+                    </h2>
+                    <DistributionList Items="DistrictsView" />
+                </div>
+            </section>
+
+            <section class="an-panel">
+                <h2 class="an-panel-title">Cargos más frecuentes</h2>
+                <DistributionList Items="data.JobTitles" />
+            </section>
+
+            <section class="an-panel">
+                <h2 class="an-panel-title">Calidad de los datos</h2>
+                <div class="an-quality">
+                    @foreach (var (label, item) in QualityRows)
+                    {
+                        <div class="an-quality-row">
+                            <span class="an-quality-label">@label</span>
+                            <span class="an-quality-track">
+                                <span class="an-quality-fill" style="width: @QualityWidth(item.Percentage)"></span>
+                            </span>
+                            <span class="an-quality-value">@Num(item.Count) · @item.Percentage.ToString("0.##")%</span>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>
+
+@code {
+    private enum Phase { Loading, Ready, Error }
+
+    private enum PeriodPreset { Today, Last7, Last30, Last90, ThisYear, Custom }
+
+    private static readonly PeriodPreset[] Presets = Enum.GetValues<PeriodPreset>();
+
+    private static readonly string[] Meses =
+        ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
+
+    private Phase phase = Phase.Loading;
+    private string? errorMessage;
+    private DashboardAnalyticsDto? data;
+
+    private PeriodPreset preset = PeriodPreset.ThisYear;
+    private DateOnly? customFrom;
+    private DateOnly? customTo;
+
+    private string? selectedProvince;
+    private IReadOnlyList<DistributionDto>? districtsOverride;
+    private AnalyticsRange? currentRange;
+
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task SelectPresetAsync(PeriodPreset value)
+    {
+        preset = value;
+
+        if (value != PeriodPreset.Custom)
+        {
+            await LoadAsync();
+        }
+    }
+
+    private Task RefreshAsync() => LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+        cts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        phase = Phase.Loading;
+        errorMessage = null;
+        selectedProvince = null;
+        districtsOverride = null;
+        StateHasChanged();
+
+        try
+        {
+            var query = BuildQuery();
+
+            if (!query.TryResolve(out var range, out var error))
+            {
+                errorMessage = error ?? "Período inválido.";
+                phase = Phase.Error;
+                return;
+            }
+
+            currentRange = range;
+            data = await AnalyticsService.GetDashboardAsync(
+                range, query.ResolveTop(), query.ResolveBucket(), token);
+            phase = Phase.Ready;
+        }
+        catch (OperationCanceledException)
+        {
+            // Una carga posterior la ha reemplazado.
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Fallo al cargar las analíticas.");
+            errorMessage = "No se pudieron cargar las analíticas. Inténtalo de nuevo.";
+            phase = Phase.Error;
+        }
+    }
+
+    private AnalyticsQuery BuildQuery()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var query = new AnalyticsQuery
+        {
+            Top = 10,
+            Bucket = preset switch
+            {
+                PeriodPreset.Today or PeriodPreset.Last7 or PeriodPreset.Last30 => "day",
+                PeriodPreset.Last90 => "week",
+                _ => "month"
+            }
+        };
+
+        switch (preset)
+        {
+            case PeriodPreset.Today:
+                query.From = today;
+                query.To = today;
+                break;
+            case PeriodPreset.Last7:
+                query.From = today.AddDays(-6);
+                query.To = today;
+                break;
+            case PeriodPreset.Last30:
+                query.From = today.AddDays(-29);
+                query.To = today;
+                break;
+            case PeriodPreset.Last90:
+                query.From = today.AddDays(-89);
+                query.To = today;
+                break;
+            case PeriodPreset.ThisYear:
+                query.From = new DateOnly(today.Year, 1, 1);
+                query.To = today;
+                break;
+            case PeriodPreset.Custom:
+                query.From = customFrom;
+                query.To = customTo;
+                break;
+        }
+
+        return query;
+    }
+
+    private async Task OnProvinceSelectedAsync(string province)
+    {
+        if (currentRange is null)
+        {
+            return;
+        }
+
+        if (string.Equals(selectedProvince, province, StringComparison.OrdinalIgnoreCase))
+        {
+            await ClearProvinceAsync();
+            return;
+        }
+
+        try
+        {
+            selectedProvince = province;
+            districtsOverride = await AnalyticsService.GetDistrictsAsync(
+                currentRange, province, 10, cts?.Token ?? CancellationToken.None);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Fallo al filtrar distritos por provincia {Province}.", province);
+        }
+    }
+
+    private Task ClearProvinceAsync()
+    {
+        selectedProvince = null;
+        districtsOverride = null;
+        return Task.CompletedTask;
+    }
+
+    private IReadOnlyList<DistributionDto> DistrictsView =>
+        districtsOverride ?? data?.Districts ?? [];
+
+    private IEnumerable<(string Label, CompletenessItemDto Item)> QualityRows
+    {
+        get
+        {
+            var c = data!.Completeness;
+            yield return ("Teléfono", c.Phone);
+            yield return ("Email", c.Email);
+            yield return ("Website", c.Website);
+            yield return ("Dirección", c.Address);
+            yield return ("Tax ID", c.TaxId);
+        }
+    }
+
+    private bool PeriodIsEmpty =>
+        data is not null
+        && data.Overview.NewClients.Value == 0
+        && data.Industries.Count == 0
+        && data.Growth.All(p => p.Value == 0);
+
+    private string BucketNoun => data?.Period.Bucket switch
+    {
+        "day" => "día",
+        "week" => "semana",
+        "year" => "año",
+        _ => "mes"
+    };
+
+    private string PeriodCaption => data is null
+        ? "Métricas agregadas de la cartera de clientes"
+        : $"{data.Period.From} → {data.Period.To}";
+
+    private static string PresetLabel(PeriodPreset value) => value switch
+    {
+        PeriodPreset.Today => "Hoy",
+        PeriodPreset.Last7 => "7 días",
+        PeriodPreset.Last30 => "30 días",
+        PeriodPreset.Last90 => "90 días",
+        PeriodPreset.ThisYear => "Este año",
+        _ => "Personalizado"
+    };
+
+    private static string Num(long value) => value.ToString("N0");
+
+    private string PctOf(long value)
+    {
+        var total = data?.Completeness.TotalClients ?? 0;
+        return total <= 0 ? "—" : $"{Math.Round(value * 100.0 / total, 1)}%";
+    }
+
+    private static string ChangeCaption(double? change) => change switch
+    {
+        null => "Sin período previo",
+        0 => "Igual que el período anterior",
+        > 0 => $"▲ {change.Value.ToString("0.##")}% vs. anterior",
+        _ => $"▼ {Math.Abs(change.Value).ToString("0.##")}% vs. anterior"
+    };
+
+    private static string Height(long value, long max) => max <= 0
+        ? "0%"
+        : $"{Math.Max(2, Math.Round(value * 100.0 / max)).ToString(Invariant)}%";
+
+    private static string QualityWidth(double percentage) =>
+        $"{Math.Round(Math.Clamp(percentage, 0, 100), 2).ToString(Invariant)}%";
+
+    private static readonly System.Globalization.CultureInfo Invariant =
+        System.Globalization.CultureInfo.InvariantCulture;
+
+    private static string ShortPeriod(string period)
+    {
+        var parts = period.Split('-');
+
+        if (parts.Length == 3)
+        {
+            return $"{parts[2]}/{parts[1]}";
+        }
+
+        if (parts.Length == 2 && parts[1].StartsWith('W'))
+        {
+            return parts[1];
+        }
+
+        if (parts.Length == 2 && int.TryParse(parts[1], out var month) && month is >= 1 and <= 12)
+        {
+            return Meses[month - 1];
+        }
+
+        return period;
+    }
+
+    public void Dispose()
+    {
+        cts?.Cancel();
+        cts?.Dispose();
+    }
+}

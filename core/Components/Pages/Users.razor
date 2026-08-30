@@ -1,5 +1,671 @@
 @page "/dashboard/users"
 @layout DashboardLayout
 @attribute [Authorize]
+@rendermode InteractiveServer
+@implements IDisposable
+
+@using System.Security.Claims
+@using Microsoft.AspNetCore.Components.Authorization
+@using OpenClient.Interfaces
+@using OpenClient.Models.DTO
+@using OpenClient.Models.DTO.Users
+@inject IUserService UserSvc
+@inject AuthenticationStateProvider AuthState
 
 <PageTitle>Open Client | Panel de Usuarios</PageTitle>
+
+<div class="users">
+
+    <header class="us-head">
+        <div>
+            <h1 class="us-title">Usuarios</h1>
+            <p class="us-sub">Cuentas con acceso al panel administrativo</p>
+        </div>
+        @if (!denied)
+        {
+            <button type="button" class="us-btn us-btn--primary" @onclick="OpenCreate" disabled="@busy">
+                Nuevo usuario
+            </button>
+        }
+    </header>
+
+    @if (denied)
+    {
+        <div class="us-state us-state--error">
+            <p>No tienes permisos para administrar usuarios.</p>
+        </div>
+    }
+    else
+    {
+        @if (banner is not null)
+        {
+            <div class="us-toast us-toast--ok" role="status">@banner</div>
+        }
+        @if (opError is not null)
+        {
+            <div class="us-toast us-toast--err" role="alert">@opError</div>
+        }
+
+        <section class="us-toolbar">
+            <input class="us-input" type="search" placeholder="Buscar por nombre, usuario o email"
+                   value="@search" @oninput="OnSearchInput" />
+
+            <select class="us-input" @bind="statusFilter" @bind:after="ReloadFirstPage">
+                <option value="@UserStatusFilter.All">Todos los estados</option>
+                <option value="@UserStatusFilter.Active">Activos</option>
+                <option value="@UserStatusFilter.Inactive">Inactivos</option>
+            </select>
+
+            <select class="us-input" @bind="roleFilter" @bind:after="ReloadFirstPage">
+                <option value="">Todos los roles</option>
+                @foreach (var r in roles)
+                {
+                    <option value="@r">@r</option>
+                }
+            </select>
+        </section>
+
+        @if (phase == Phase.Loading)
+        {
+            <div class="us-state"><span class="us-spinner"></span><p>Cargando usuarios…</p></div>
+        }
+        else if (phase == Phase.Error)
+        {
+            <div class="us-state us-state--error">
+                <p>@errorMessage</p>
+                <button type="button" class="us-btn" @onclick="LoadAsync">Reintentar</button>
+            </div>
+        }
+        else if (list is null || list.TotalCount == 0)
+        {
+            <div class="us-state"><p>No hay usuarios que coincidan con el filtro.</p></div>
+        }
+        else
+        {
+            <div class="us-tablewrap">
+                <table class="us-table">
+                    <thead>
+                        <tr>
+                            <th class="us-sortable" @onclick='() => SetSort("name")'>Nombre @SortMark("name")</th>
+                            <th class="us-sortable" @onclick='() => SetSort("username")'>Username @SortMark("username")</th>
+                            <th class="us-sortable" @onclick='() => SetSort("email")'>Email @SortMark("email")</th>
+                            <th>Roles</th>
+                            <th class="us-sortable" @onclick='() => SetSort("status")'>Estado @SortMark("status")</th>
+                            <th>Último acceso</th>
+                            <th class="us-sortable" @onclick='() => SetSort("created")'>Creado @SortMark("created")</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var u in list.Items)
+                        {
+                            <tr>
+                                <td>@u.FullName</td>
+                                <td>@u.UserName</td>
+                                <td>@u.Email</td>
+                                <td>@(u.Roles.Count == 0 ? "—" : string.Join(", ", u.Roles))</td>
+                                <td>
+                                    <span class="us-pill @(u.IsActive ? "is-on" : "is-off")">
+                                        @(u.IsActive ? "Activo" : "Inactivo")
+                                    </span>
+                                </td>
+                                <td>@(u.LastLoginAt is { } ll ? ll.ToString("dd/MM/yyyy HH:mm") : "Nunca")</td>
+                                <td>@u.CreatedAt.ToString("dd/MM/yyyy")</td>
+                                <td class="us-actions">
+                                    <button class="us-link" @onclick="() => OpenView(u.Id)">Ver</button>
+                                    <button class="us-link" @onclick="() => OpenEdit(u.Id)">Editar</button>
+                                    @if (u.IsActive)
+                                    {
+                                        <button class="us-link" disabled="@(u.Id == actorId)"
+                                                @onclick="() => ConfirmDeactivate(u)">Desactivar</button>
+                                    }
+                                    else
+                                    {
+                                        <button class="us-link" @onclick="() => SetActive(u.Id, true)">Activar</button>
+                                    }
+                                    <button class="us-link" @onclick="() => OpenPassword(u.Id)">Contraseña</button>
+                                    <button class="us-link" @onclick="() => OpenRoles(u)">Roles</button>
+                                    <button class="us-link us-link--danger" disabled="@(u.Id == actorId)"
+                                            @onclick="() => ConfirmDelete(u)">Eliminar</button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <nav class="us-pager">
+                <button class="us-btn" disabled="@(!list.HasPrevious || busy)" @onclick="() => GoToPage(list.Page - 1)">Anterior</button>
+                <span>Página @list.Page de @Math.Max(1, list.TotalPages) · @list.TotalCount usuarios</span>
+                <button class="us-btn" disabled="@(!list.HasNext || busy)" @onclick="() => GoToPage(list.Page + 1)">Siguiente</button>
+            </nav>
+        }
+    }
+</div>
+
+@if (modal == Modal.View && detail is not null)
+{
+    <div class="us-backdrop" @onclick="CloseModal">
+        <div class="us-modal" @onclick:stopPropagation="true">
+            <h2>@detail.FullName</h2>
+            <dl class="us-dl">
+                <dt>Username</dt><dd>@detail.UserName</dd>
+                <dt>Email</dt><dd>@detail.Email</dd>
+                <dt>Roles</dt><dd>@(detail.Roles.Count == 0 ? "—" : string.Join(", ", detail.Roles))</dd>
+                <dt>Estado</dt><dd>@(detail.IsActive ? "Activo" : "Inactivo")</dd>
+                <dt>Último acceso</dt><dd>@(detail.LastLoginAt?.ToString("dd/MM/yyyy HH:mm") ?? "Nunca")</dd>
+                <dt>Creado</dt><dd>@detail.CreatedAt.ToString("dd/MM/yyyy HH:mm")</dd>
+            </dl>
+            <div class="us-modal-foot">
+                <button class="us-btn" @onclick="CloseModal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (modal == Modal.Form && form is not null)
+{
+    <div class="us-backdrop" @onclick="CloseModal">
+        <div class="us-modal" @onclick:stopPropagation="true">
+            <h2>@(form.IsCreate ? "Nuevo usuario" : "Editar usuario")</h2>
+
+            @if (formErrors.Count > 0)
+            {
+                <ul class="us-errors">
+                    @foreach (var e in formErrors) { <li>@e</li> }
+                </ul>
+            }
+
+            <div class="us-formgrid">
+                <label>Nombre<input @bind="form.FirstName" /></label>
+                <label>Apellido<input @bind="form.LastName" /></label>
+                <label>Username<input @bind="form.UserName" /></label>
+                <label>Email<input @bind="form.Email" type="email" /></label>
+                @if (form.IsCreate)
+                {
+                    <label>Contraseña<input @bind="form.Password" type="password" /></label>
+                    <label>Confirmar<input @bind="form.ConfirmPassword" type="password" /></label>
+                }
+                <label>Rol
+                    <select @bind="form.Role">
+                        @foreach (var r in roles) { <option value="@r">@r</option> }
+                    </select>
+                </label>
+                <label class="us-check">
+                    <input type="checkbox" @bind="form.IsActive" /> Cuenta activa
+                </label>
+            </div>
+
+            <div class="us-modal-foot">
+                <button class="us-btn" @onclick="CloseModal" disabled="@busy">Cancelar</button>
+                <button class="us-btn us-btn--primary" @onclick="SubmitForm" disabled="@busy">
+                    @(busy ? "Guardando…" : "Guardar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (modal == Modal.Password && pwd is not null)
+{
+    <div class="us-backdrop" @onclick="CloseModal">
+        <div class="us-modal" @onclick:stopPropagation="true">
+            <h2>Cambiar contraseña</h2>
+            <p class="us-muted">Se establecerá una nueva contraseña para la cuenta seleccionada.</p>
+            @if (formErrors.Count > 0)
+            {
+                <ul class="us-errors">@foreach (var e in formErrors) { <li>@e</li> }</ul>
+            }
+            <div class="us-formgrid">
+                <label>Nueva contraseña<input @bind="pwd.NewPassword" type="password" /></label>
+                <label>Confirmar<input @bind="pwd.ConfirmPassword" type="password" /></label>
+            </div>
+            <div class="us-modal-foot">
+                <button class="us-btn" @onclick="CloseModal" disabled="@busy">Cancelar</button>
+                <button class="us-btn us-btn--primary" @onclick="SubmitPassword" disabled="@busy">
+                    @(busy ? "Guardando…" : "Cambiar")
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (modal == Modal.Roles && rolesTarget is not null)
+{
+    <div class="us-backdrop" @onclick="CloseModal">
+        <div class="us-modal" @onclick:stopPropagation="true">
+            <h2>Roles de @rolesTarget.FullName</h2>
+            <p class="us-muted">Rol actual: <strong>@(rolesTarget.Roles.Count == 0 ? "—" : string.Join(", ", rolesTarget.Roles))</strong></p>
+            @if (formErrors.Count > 0)
+            {
+                <ul class="us-errors">@foreach (var e in formErrors) { <li>@e</li> }</ul>
+            }
+            <label class="us-block">Nuevo rol
+                <select @bind="selectedRole">
+                    @foreach (var r in roles) { <option value="@r">@r</option> }
+                </select>
+            </label>
+            @if (UserRoles.IsPrivileged(selectedRole))
+            {
+                <p class="us-warn">Estás asignando un rol privilegiado.</p>
+            }
+            <div class="us-modal-foot">
+                <button class="us-btn" @onclick="CloseModal" disabled="@busy">Cerrar</button>
+                <button class="us-btn" @onclick="RemoveRole" disabled="@busy">Retirar rol actual</button>
+                <button class="us-btn us-btn--primary" @onclick="AssignRole" disabled="@busy">Asignar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@if (modal == Modal.Confirm && confirm is not null)
+{
+    <div class="us-backdrop" @onclick="CloseModal">
+        <div class="us-modal us-modal--sm" @onclick:stopPropagation="true">
+            <h2>@confirm.Title</h2>
+            <p>@confirm.Message</p>
+            <div class="us-modal-foot">
+                <button class="us-btn" @onclick="CloseModal" disabled="@busy">Cancelar</button>
+                <button class="us-btn us-btn--danger" @onclick="RunConfirm" disabled="@busy">
+                    @(busy ? "Procesando…" : confirm.Cta)
+                </button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private enum Phase { Loading, Ready, Error }
+    private enum Modal { None, View, Form, Password, Roles, Confirm }
+
+    private ClaimsPrincipal actor = new(new ClaimsIdentity());
+    private int actorId;
+    private bool denied;
+
+    private Phase phase = Phase.Loading;
+    private string? errorMessage;
+    private PagedResult<UserListItemDto>? list;
+    private IReadOnlyList<string> roles = [];
+
+    private string? search;
+    private UserStatusFilter statusFilter = UserStatusFilter.All;
+    private string roleFilter = string.Empty;
+    private string sortBy = "created";
+    private string sortDir = "desc";
+    private int currentPage = 1;
+    private const int PageSize = 10;
+
+    private bool busy;
+    private string? banner;
+    private string? opError;
+
+    private Modal modal = Modal.None;
+    private UserDetailDto? detail;
+    private FormModel? form;
+    private ChangePasswordRequest? pwd;
+    private UserListItemDto? rolesTarget;
+    private string selectedRole = UserRoles.User;
+    private ConfirmModel? confirm;
+    private readonly List<string> formErrors = [];
+
+    private CancellationTokenSource? searchCts;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var state = await AuthState.GetAuthenticationStateAsync();
+        actor = state.User;
+        int.TryParse(actor.FindFirst(ClaimTypes.NameIdentifier)?.Value, out actorId);
+
+        if (actor.Identity?.IsAuthenticated != true || !actor.IsInRole(UserRoles.Admin))
+        {
+            denied = true;
+            phase = Phase.Ready;
+            return;
+        }
+
+        roles = UserSvc.GetAvailableRoles();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        phase = Phase.Loading;
+        errorMessage = null;
+        StateHasChanged();
+
+        try
+        {
+            var filter = new UserSearchFilter
+            {
+                Search = search,
+                Status = statusFilter,
+                Role = string.IsNullOrEmpty(roleFilter) ? null : roleFilter,
+                SortBy = sortBy,
+                SortDir = sortDir,
+                Page = currentPage,
+                PageSize = PageSize
+            };
+
+            list = await UserSvc.GetUsersAsync(actor, filter, CancellationToken.None);
+            currentPage = list.Page;
+            phase = Phase.Ready;
+        }
+        catch (UsersAccessDeniedException)
+        {
+            denied = true;
+            phase = Phase.Ready;
+        }
+        catch (Exception)
+        {
+            errorMessage = "No se pudo cargar el listado de usuarios.";
+            phase = Phase.Error;
+        }
+    }
+
+    private async Task ReloadFirstPage()
+    {
+        currentPage = 1;
+        await LoadAsync();
+    }
+
+    private async Task OnSearchInput(ChangeEventArgs e)
+    {
+        search = e.Value?.ToString();
+        searchCts?.Cancel();
+        searchCts?.Dispose();
+        searchCts = new CancellationTokenSource();
+        var token = searchCts.Token;
+
+        try
+        {
+            await Task.Delay(400, token);
+            currentPage = 1;
+            await LoadAsync();
+        }
+        catch (TaskCanceledException)
+        {
+            // el usuario sigue escribiendo
+        }
+    }
+
+    private async Task SetSort(string column)
+    {
+        if (sortBy == column)
+        {
+            sortDir = sortDir == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            sortBy = column;
+            sortDir = column is "name" or "username" or "email" ? "asc" : "desc";
+        }
+
+        await LoadAsync();
+    }
+
+    private MarkupString SortMark(string column) =>
+        sortBy != column ? default : new MarkupString(sortDir == "asc" ? "▲" : "▼");
+
+    private async Task GoToPage(int target)
+    {
+        currentPage = Math.Max(1, target);
+        await LoadAsync();
+    }
+
+    // ---------- Acciones ----------
+
+    private void Flash(string message)
+    {
+        banner = message;
+        opError = null;
+    }
+
+    private void ShowFailure(UserMutationResult result)
+    {
+        banner = null;
+        opError = result.ValidationErrors.Count > 0
+            ? string.Join(" ", result.ValidationErrors)
+            : result.Message ?? "La operación no se pudo completar.";
+    }
+
+    private async Task SetActive(int id, bool active)
+    {
+        if (busy) return;
+        busy = true;
+        try
+        {
+            var result = await UserSvc.SetActiveAsync(actor, id, active, CancellationToken.None);
+            if (result.Succeeded) { Flash(active ? "Usuario activado." : "Usuario desactivado."); await LoadAsync(); }
+            else { ShowFailure(result); }
+        }
+        finally { busy = false; }
+    }
+
+    private void ConfirmDeactivate(UserListItemDto u) => confirm = OpenConfirm(
+        "Desactivar usuario",
+        $"¿Desactivar la cuenta de {u.FullName}? No podrá iniciar sesión.",
+        "Desactivar",
+        () => SetActiveInline(u.Id, false));
+
+    private void ConfirmDelete(UserListItemDto u) => confirm = OpenConfirm(
+        "Eliminar usuario",
+        $"Esta acción elimina definitivamente a {u.FullName}. Considera desactivarlo en su lugar.",
+        "Eliminar",
+        () => DeleteInline(u.Id));
+
+    private ConfirmModel OpenConfirm(string title, string message, string cta, Func<Task> action)
+    {
+        formErrors.Clear();
+        modal = Modal.Confirm;
+        return new ConfirmModel(title, message, cta, action);
+    }
+
+    private async Task RunConfirm()
+    {
+        if (confirm is null || busy) return;
+        busy = true;
+        try { await confirm.Action(); }
+        finally { busy = false; }
+    }
+
+    private async Task SetActiveInline(int id, bool active)
+    {
+        var result = await UserSvc.SetActiveAsync(actor, id, active, CancellationToken.None);
+        if (result.Succeeded) { CloseModal(); Flash("Usuario desactivado."); await LoadAsync(); }
+        else { ShowFailure(result); CloseModal(); }
+    }
+
+    private async Task DeleteInline(int id)
+    {
+        var result = await UserSvc.DeleteAsync(actor, id, CancellationToken.None);
+        if (result.Succeeded) { CloseModal(); Flash("Usuario eliminado."); await LoadAsync(); }
+        else { ShowFailure(result); CloseModal(); }
+    }
+
+    // ---------- Modales de datos ----------
+
+    private async Task OpenView(int id)
+    {
+        detail = await UserSvc.GetByIdAsync(actor, id, CancellationToken.None);
+        modal = detail is null ? Modal.None : Modal.View;
+    }
+
+    private void OpenCreate()
+    {
+        formErrors.Clear();
+        form = new FormModel { IsCreate = true, Role = UserRoles.User, IsActive = true };
+        modal = Modal.Form;
+    }
+
+    private async Task OpenEdit(int id)
+    {
+        var d = await UserSvc.GetByIdAsync(actor, id, CancellationToken.None);
+        if (d is null) return;
+
+        formErrors.Clear();
+        form = new FormModel
+        {
+            IsCreate = false,
+            Id = d.Id,
+            FirstName = d.FirstName,
+            LastName = d.LastName,
+            UserName = d.UserName,
+            Email = d.Email,
+            Role = d.Roles.Count > 0 ? d.Roles[0] : UserRoles.User,
+            IsActive = d.IsActive,
+            ConcurrencyStamp = d.ConcurrencyStamp
+        };
+        modal = Modal.Form;
+    }
+
+    private async Task SubmitForm()
+    {
+        if (form is null || busy) return;
+        busy = true;
+        formErrors.Clear();
+
+        try
+        {
+            UserMutationResult result;
+            if (form.IsCreate)
+            {
+                result = await UserSvc.CreateAsync(actor, new CreateUserRequest
+                {
+                    FirstName = form.FirstName,
+                    LastName = form.LastName,
+                    UserName = form.UserName,
+                    Email = form.Email,
+                    Password = form.Password,
+                    ConfirmPassword = form.ConfirmPassword,
+                    Role = form.Role,
+                    IsActive = form.IsActive
+                }, CancellationToken.None);
+            }
+            else
+            {
+                result = await UserSvc.UpdateAsync(actor, form.Id, new UpdateUserRequest
+                {
+                    FirstName = form.FirstName,
+                    LastName = form.LastName,
+                    UserName = form.UserName,
+                    Email = form.Email,
+                    Role = form.Role,
+                    IsActive = form.IsActive,
+                    ConcurrencyStamp = form.ConcurrencyStamp
+                }, CancellationToken.None);
+            }
+
+            if (result.Succeeded)
+            {
+                var wasCreate = form.IsCreate;
+                CloseModal();
+                Flash(wasCreate ? "Usuario creado." : "Cambios guardados.");
+                await LoadAsync();
+            }
+            else if (result.ValidationErrors.Count > 0)
+            {
+                formErrors.AddRange(result.ValidationErrors);
+            }
+            else
+            {
+                formErrors.Add(result.Message ?? "No se pudo guardar.");
+            }
+        }
+        finally { busy = false; }
+    }
+
+    private void OpenPassword(int id)
+    {
+        formErrors.Clear();
+        pwd = new ChangePasswordRequest();
+        passwordTargetId = id;
+        modal = Modal.Password;
+    }
+
+    private int passwordTargetId;
+
+    private async Task SubmitPassword()
+    {
+        if (pwd is null || busy) return;
+        busy = true;
+        formErrors.Clear();
+        try
+        {
+            var result = await UserSvc.ChangePasswordAsync(actor, passwordTargetId, pwd, CancellationToken.None);
+            if (result.Succeeded) { CloseModal(); Flash("Contraseña actualizada."); }
+            else if (result.ValidationErrors.Count > 0) { formErrors.AddRange(result.ValidationErrors); }
+            else { formErrors.Add(result.Message ?? "No se pudo cambiar la contraseña."); }
+        }
+        finally { busy = false; }
+    }
+
+    private void OpenRoles(UserListItemDto u)
+    {
+        formErrors.Clear();
+        rolesTarget = u;
+        selectedRole = u.Roles.Count > 0 ? u.Roles[0] : UserRoles.User;
+        modal = Modal.Roles;
+    }
+
+    private async Task AssignRole()
+    {
+        if (rolesTarget is null || busy) return;
+        busy = true;
+        formErrors.Clear();
+        try
+        {
+            var result = await UserSvc.AssignRoleAsync(actor, rolesTarget.Id, selectedRole, CancellationToken.None);
+            if (result.Succeeded) { CloseModal(); Flash($"Rol '{selectedRole}' asignado."); await LoadAsync(); }
+            else if (result.ValidationErrors.Count > 0) { formErrors.AddRange(result.ValidationErrors); }
+            else { formErrors.Add(result.Message ?? "No se pudo asignar el rol."); }
+        }
+        finally { busy = false; }
+    }
+
+    private async Task RemoveRole()
+    {
+        if (rolesTarget is null || busy || rolesTarget.Roles.Count == 0) return;
+        busy = true;
+        formErrors.Clear();
+        try
+        {
+            var result = await UserSvc.RemoveRoleAsync(actor, rolesTarget.Id, rolesTarget.Roles[0], CancellationToken.None);
+            if (result.Succeeded) { CloseModal(); Flash("Rol retirado."); await LoadAsync(); }
+            else { formErrors.Add(result.Message ?? "No se pudo retirar el rol."); }
+        }
+        finally { busy = false; }
+    }
+
+    private void CloseModal()
+    {
+        modal = Modal.None;
+        detail = null;
+        form = null;
+        pwd = null;
+        rolesTarget = null;
+        confirm = null;
+    }
+
+    public void Dispose()
+    {
+        searchCts?.Cancel();
+        searchCts?.Dispose();
+    }
+
+    private sealed class FormModel
+    {
+        public bool IsCreate { get; set; }
+        public int Id { get; set; }
+        public string FirstName { get; set; } = string.Empty;
+        public string LastName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+        public string ConfirmPassword { get; set; } = string.Empty;
+        public string Role { get; set; } = UserRoles.User;
+        public bool IsActive { get; set; } = true;
+        public string? ConcurrencyStamp { get; set; }
+    }
+
+    private sealed record ConfirmModel(string Title, string Message, string Cta, Func<Task> Action);
+}

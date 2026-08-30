@@ -2,4 +2,7 @@
   <Folder Name="/core/">
     <Project Path="core/openclient.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OpenClient.Api.Tests/OpenClient.Api.Tests.csproj" />
+  </Folder>
 </Solution>

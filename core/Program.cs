@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using openclient.Components;
+using OpenClient.Api;
 using OpenClient.Extensions;
 using OpenClient.Interfaces;
 using Serilog;
@@ -25,12 +26,24 @@ builder.Services
     .AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Expone el estado de autenticación a los componentes (página de Usuarios).
+builder.Services.AddCascadingAuthenticationState();
+
 builder.Services.AddApplicationServices(builder.Configuration);
 builder.Services.AddCookieAuthentication();
 builder.Services.AddObservability();
 
 builder.Services.AddControllers();
 builder.Services.AddHttpContextAccessor();
+
+// Módulo independiente de API de integración (/api/v1).
+builder.Services.AddIntegrationApi(builder.Configuration);
+
+// Módulo independiente de Analíticas (/api/analytics + página /dashboard/analytics).
+builder.Services.AddAnalytics();
+
+// Módulo de Usuarios (/api/users + página /dashboard/users).
+builder.Services.AddUserManagement();
 
 var app = builder.Build();
 
@@ -51,6 +64,10 @@ if (!app.Environment.IsDevelopment())
 
 app.UseSerilogRequestLogging();
 
+// Da formato JSON homogéneo a los errores de /api/v1 (incluidos 401/403) y evita
+// filtrar detalles internos. Debe ir antes de la autenticación.
+app.UseApiErrorHandling();
+
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -66,7 +83,13 @@ app.MapHealthChecks("/health/ready", new HealthCheckOptions
 app.MapStaticAssets();
 app.MapControllers();
 
+// Documento OpenAPI de la API v1: /openapi/v1.json
+app.MapOpenApi();
+
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+// Punto de extensión para pruebas de integración (WebApplicationFactory<Program>).
+public partial class Program;

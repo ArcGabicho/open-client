@@ -81,8 +81,15 @@ public sealed class DbInitializer : IDbInitializer
 
         var hash = BCrypt.Net.BCrypt.HashPassword(adminPassword, workFactor: 12);
 
+        var adminUserName = adminEmail.Split('@')[0].Trim();
+        if (string.IsNullOrWhiteSpace(adminUserName))
+        {
+            adminUserName = "admin";
+        }
+
         db.Users.Add(new User
         {
+            UserName = adminUserName,
             Email = adminEmail,
             PasswordHash = hash,
             Role = "Admin",
@@ -90,7 +97,8 @@ public sealed class DbInitializer : IDbInitializer
             LastName = "User",
             ProfileImage = "",
             IsActive = true,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ConcurrencyStamp = Guid.NewGuid().ToString("N")
         });
 
         await db.SaveChangesAsync(ct);

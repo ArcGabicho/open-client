@@ -3,11 +3,6 @@ using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace OpenClient.Data;
 
-/// <summary>
-/// Comprobación de salud de la base de datos. Abre un contexto desde el factory
-/// y verifica la conectividad con <c>CanConnectAsync</c>. Etiquetada como
-/// <c>ready</c> para el endpoint <c>/health/ready</c>.
-/// </summary>
 public sealed class DbHealthCheck : IHealthCheck
 {
     private readonly IDbContextFactory<OpenClientDbContext> _contextFactory;

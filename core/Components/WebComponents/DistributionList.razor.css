@@ -1,0 +1,74 @@
+.an-dist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+}
+
+.an-dist-row {
+    display: grid;
+    grid-template-columns: minmax(90px, 30%) 1fr minmax(84px, auto);
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.15rem 0.25rem;
+    border-radius: var(--radius-sm, 10px);
+}
+
+.an-dist-row.is-clickable {
+    cursor: pointer;
+}
+
+.an-dist-row.is-clickable:hover {
+    background: var(--accent-soft, #f0efff);
+}
+
+.an-dist-row.is-selected {
+    background: var(--accent-soft, #f0efff);
+    outline: 1px solid var(--accent, #635bff);
+}
+
+.an-dist-label {
+    font-size: 0.83rem;
+    font-weight: 550;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.an-dist-track {
+    height: 12px;
+    background: var(--track, #f1f2f6);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.an-dist-fill {
+    display: block;
+    height: 100%;
+    background: var(--accent, #635bff);
+    border-radius: 999px;
+    transition: width 0.25s ease;
+}
+
+.an-dist-value {
+    font-size: 0.78rem;
+    color: var(--text-soft, #565b67);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.an-empty-line {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-soft, #565b67);
+}
+
+@media (max-width: 560px) {
+    .an-dist-row {
+        grid-template-columns: 1fr;
+        gap: 0.25rem;
+    }
+
+    .an-dist-value {
+        text-align: left;
+    }
+}

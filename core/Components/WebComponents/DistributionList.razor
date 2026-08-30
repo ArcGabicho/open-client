@@ -1,0 +1,47 @@
+@using OpenClient.Models.DTO.Analytics
+
+@if (Items.Count == 0)
+{
+    <p class="an-empty-line">Sin datos para el período.</p>
+}
+else
+{
+    <div class="an-dist">
+        @foreach (var item in Items)
+        {
+            <div class="an-dist-row @(Clickable ? "is-clickable" : null) @(IsSelected(item) ? "is-selected" : null)"
+                 @onclick="() => SelectAsync(item.Label)">
+                <span class="an-dist-label">@item.Label</span>
+                <span class="an-dist-track">
+                    <span class="an-dist-fill" style="width: @Width(item.Value)%"></span>
+                </span>
+                <span class="an-dist-value">@item.Value.ToString("N0") · @item.Percentage.ToString("0.##")%</span>
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter, EditorRequired]
+    public IReadOnlyList<DistributionDto> Items { get; set; } = [];
+
+    [Parameter]
+    public string? Selected { get; set; }
+
+    [Parameter]
+    public EventCallback<string> OnSelect { get; set; }
+
+    private bool Clickable => OnSelect.HasDelegate;
+
+    private long Max => Items.Count == 0 ? 0 : Items.Max(i => i.Value);
+
+    private double Width(long value) =>
+        Max <= 0 ? 0 : Math.Max(2, Math.Round(value * 100.0 / Max));
+
+    private bool IsSelected(DistributionDto item) =>
+        Selected is not null
+        && string.Equals(Selected, item.Label, StringComparison.OrdinalIgnoreCase);
+
+    private Task SelectAsync(string label) =>
+        Clickable ? OnSelect.InvokeAsync(label) : Task.CompletedTask;
+}

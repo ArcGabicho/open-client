@@ -68,5 +68,13 @@ public class ClientConfiguration : IEntityTypeConfiguration<Client>
             .IsRequired(false);
 
         builder.HasIndex(client => client.IsDeleted);
+
+        // Índices para las agregaciones del módulo de Analíticas: filtro temporal
+        // sobre CreatedAt y GROUP BY sobre las dimensiones comerciales.
+        builder.HasIndex(client => client.CreatedAt);
+        builder.HasIndex(client => client.Industry);
+        builder.HasIndex(client => client.Province);
+        builder.HasIndex(client => client.District);
+        builder.HasIndex(client => client.JobTitle);
     }
 }

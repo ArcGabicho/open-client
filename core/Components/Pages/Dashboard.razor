@@ -33,7 +33,6 @@
     private int? totalClients;
     private int? industryCount;
     private DateTime? lastCreated;
-    private bool dbOk;
     private IReadOnlyList<ClientListItemDto> recentClients = [];
 
     private readonly string greeting = GreetingFor(DateTime.Now);
@@ -62,13 +61,11 @@
             lastCreated = recent.Items.Count > 0 ? recent.Items[0].CreatedAt : null;
 
             industryCount = (await ClientService.GetIndustriesAsync()).Count;
-            dbOk = true;
         }
         catch
         {
             // Si la base de datos no está disponible, el inicio se muestra igual
-            // con los valores en "—" y el estado en "Sin conexión".
-            dbOk = false;
+            // con los valores en "—".
         }
     }
 
