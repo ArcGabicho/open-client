@@ -10,12 +10,18 @@ Visión de las capas de Open Client tras el refactor a repositorio +
 ```
 Componentes Blazor (.razor)          ── UI, estado de pantalla
 Controllers/  (API REST JSON)        ── contrato HTTP, códigos de estado
+   ClientsController      → /api/clients        (CRUD administrativo)
+   Api/V1 ClientsController→ /api/v1/clients     (integración, solo lectura)
+   AnalyticsController    → /api/analytics/*     (métricas agregadas)
+   UsersController        → /api/users/*         (política Users.Admin)
         │
         ▼
-Services/     (IClientService, IAuthService)   ── casos de uso: validación, mapeo, orquestación
+Services/  casos de uso: validación, mapeo, orquestación
+   IClientService · IAuthService · IApiClientService · IAnalyticsService
+   IUserService (+ IUserAuditLogger) · IContactMailer
         │
         ▼
-Data/Repositories/  (IClientRepository)        ── acceso a datos, traducción a SQL
+Data/Repositories/  (IClientRepository, IUserRepository)  ── acceso a datos, traducción a SQL
         │
         ▼
 Data/  (OpenClientDbContext, IDbContextFactory)  ── EF Core
@@ -23,6 +29,11 @@ Data/  (OpenClientDbContext, IDbContextFactory)  ── EF Core
         ▼
 SQL Server 2022 (Docker / Azure)
 ```
+
+Los módulos de **Analíticas** y **API de integración** no usan repositorio: abren
+su propio `OpenClientDbContext` desde el factory y resuelven todo con `IQueryable`
++ agregaciones traducibles a SQL (`GROUP BY`, `COUNT`, `SUM`), sin materializar
+tablas completas en memoria.
 
 Reglas de dependencia:
 
@@ -49,8 +60,9 @@ Motivo: en Blazor Server el circuito es de larga duración y un `DbContext`
 scoped se comparte entre renders concurrentes (no es thread-safe). El factory
 da una instancia fresca por operación.
 
-Consumidores del factory: `ClientRepository`, `AuthService`, `DbInitializer`,
-`DbHealthCheck`.
+Consumidores del factory: `ClientRepository`, `UserRepository`, `AuthService`,
+`ApiClientService`, `AnalyticsService`, `DbInitializer`, `DbHealthCheck` y el
+evento `OnValidatePrincipal` de la cookie.
 
 **Tiempo de diseño**: `Data/Context/OpenClientDbContextFactory.cs`
 (`IDesignTimeDbContextFactory<OpenClientDbContext>`) permite que
@@ -104,7 +116,13 @@ Migración: `Data/Migrations/*_AddClientSoftDeleteAndAudit.cs`.
   dígitos, URL absoluta, longitudes máximas).
 - `ClientSearchFilterValidator.cs` — comprobación defensiva del filtro de
   consulta.
-- Registro: `AddValidatorsFromAssemblyContaining<ClientEditModelValidator>()`.
+- `CreateUserRequestValidator` / `UpdateUserRequestValidator` /
+  `ChangePasswordRequestValidator` / `UserSearchFilterValidator` — módulo de
+  Usuarios. `PasswordRules` centraliza la política de contraseña (mínimo 8, con
+  letra y dígito, confirmación exacta).
+- `ContactMessageValidator` — formulario de contacto público.
+- Registro: `AddValidatorsFromAssemblyContaining<ClientEditModelValidator>()`
+  descubre **todos** los validadores del ensamblado.
 - `ClientService.CreateAsync`/`UpdateAsync` llaman a `ValidateAndThrowAsync`. Un
   fallo lanza `FluentValidation.ValidationException`, que:
   - en `ClientsController` se traduce a **HTTP 400** con errores por campo
@@ -119,12 +137,17 @@ Migración: `Data/Migrations/*_AddClientSoftDeleteAndAudit.cs`.
 
 | Método | Registra |
 | --- | --- |
-| `AddApplicationServices(config)` | `AddDbContextFactory`, `IClientRepository`, `IAuthService`, `IClientService`, `IDbInitializer`, validadores. |
-| `AddCookieAuthentication()` | Esquema de cookies (`/log-in`, expiración 8 h, sliding) + `AddAuthorization`. |
+| `AddApplicationServices(config)` | `AddDbContextFactory`, `IClientRepository`, `IAuthService`, `IClientService`, `IDbInitializer`, `IContactMailer`, validadores. |
+| `AddIntegrationApi(config)` | `IApiClientService`, documento OpenAPI `v1` (acotado a `api/v1`), política CORS con nombre `ApiV1.Cors` (leída de `Api:Cors:AllowedOrigins`, inactiva mientras esté vacía). |
+| `AddAnalytics()` | `IAnalyticsService` + `AddMemoryCache` (caché opcional, `Analytics:CacheSeconds`). |
+| `AddUserManagement()` | `IUserRepository`, `IUserService`, `IUserAuditLogger`. |
+| `AddCookieAuthentication()` | Esquema de cookies (`/log-in`, expiración 8 h, sliding). Eventos: bajo `/api` responde 401/403 en vez de redirigir al HTML; `OnValidatePrincipal` revalida (máx. cada 3 min) que el usuario siga activo y lo expulsa si fue desactivado/eliminado. `AddAuthorization` con políticas `ApiV1.Read` (roles `Admin`/`Integrations`) y `Users.Admin` (rol `Admin`). |
 | `AddObservability()` | Health checks (`DbHealthCheck` con etiqueta `ready`). |
 
-`Program.cs` solo encadena estos métodos, configura Serilog y compone el
-pipeline.
+`Program.cs` encadena estos métodos, añade `AddControllers`,
+`AddHttpContextAccessor`, `AddCascadingAuthenticationState`, configura Serilog y
+compone el pipeline (`UseApiErrorHandling` antes de la autenticación,
+`MapOpenApi` tras `MapControllers`).
 
 ---
 
@@ -154,6 +177,25 @@ mediante `ILogger<T>`. **Nunca** se registran contraseñas, hashes ni secretos.
 
 ## 9. API REST
 
-Ver `docs/rest-api.md`. Resumen: `ClientsController` (`[Authorize]`,
-`/api/clients`) ofrece listado paginado, detalle, alta (201), edición (204) y
-borrado lógico (204), compartiendo `IClientService` con el panel.
+Ver `docs/rest-api.md`. Cuatro grupos de controladores, todos `[Authorize]` y
+autenticados con la cookie de sesión:
+
+| Controlador | Base | Notas |
+| --- | --- | --- |
+| `ClientsController` | `/api/clients` | CRUD administrativo; comparte `IClientService` con el panel. |
+| `Api.V1.ClientsController` | `/api/v1/clients` | Solo lectura, versionada. DTO propio (`ApiClientDto`), envoltura `{ data, pagination }`, errores `{ "error": { "code", "message" } }`. Política `ApiV1.Read`. `ApiErrorMiddleware` da formato homogéneo a 401/403/404/500 bajo `/api/v1`. Documento OpenAPI en `/openapi/v1.json`. |
+| `AnalyticsController` | `/api/analytics/*` | Métricas agregadas en SQL; filtro temporal `from`/`to`, `top`, `bucket`; comparación contra el período anterior. Caché opcional. |
+| `UsersController` | `/api/users/*` | Política `Users.Admin`. El `UserService` revalida el `ClaimsPrincipal` (chokepoint), aplica las protecciones (autoprotección, último administrador, rol permitido), usa un testigo de concurrencia (`User.ConcurrencyStamp`) y audita vía `IUserAuditLogger` (Serilog estructurado). |
+
+## 10. Módulo de Usuarios — reglas transversales
+
+- **Identidad existente, sin sistema paralelo**: entidad `User` + BCrypt + cookie.
+  El rol es la columna `User.Role` (claim `ClaimTypes.Role`); el módulo reconoce
+  un conjunto cerrado `{Admin, Manager, User}`.
+- **Nuevos campos de `User`**: `UserName` (único), `LastLoginAt` (lo sella
+  `AuthService.RecordSuccessfulLoginAsync` tras el login) y `ConcurrencyStamp`.
+  Migración `*_AddUserAccountFields` (con backfill de filas existentes).
+- **Auditoría**: `USER_AUDIT action= actor= actorId= targetUserId= timestamp=`.
+  Nunca registra contraseñas, hashes ni tokens.
+- **Nunca se exponen** `PasswordHash` ni security stamps; `ConcurrencyStamp` solo
+  viaja en el detalle (necesario para la edición optimista).

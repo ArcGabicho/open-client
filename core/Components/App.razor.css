@@ -17,11 +17,6 @@ html, body {
     color: #111827;
 }
 
-/* En móvil, los shells de las páginas hacen full-bleed cancelando este
-   padding con un margen negativo. Ese truco es frágil a redondeos de
-   subpíxel y puede recortar contenido por la derecha: aquí se elimina el
-   padding lateral y cada shell pone su margen lateral a 0 (ver *.razor.css
-   de los layouts). */
 @media (max-width: 640px) {
     .container {
         padding-left: 0;

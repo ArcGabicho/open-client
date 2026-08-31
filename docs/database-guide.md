@@ -89,6 +89,17 @@ El unico placeholder es `__MSSQL_APP_PASSWORD__`, sustituido por `init.sh`.
 ## 3. EF Core Migrations
 
 El esquema de las tablas `Users` y `Clients` se gestiona via EF Core migrations.
+`dotnet-ef` esta fijado como herramienta local (`.config/dotnet-tools.json`):
+`dotnet tool restore` antes de usarlo.
+
+Migraciones actuales (en orden):
+
+| Migracion | Contenido |
+|-----------|-----------|
+| `InitialCreate` | Tablas `Users` y `Clients`. |
+| `AddClientSoftDeleteAndAudit` | `Client.UpdatedAt` / `IsDeleted` / `DeletedAt` + indice `IX_Clients_IsDeleted`. |
+| `AddClientAnalyticsIndexes` | Indices sobre `Clients.CreatedAt`, `Industry`, `Province`, `District`, `JobTitle` (para las agregaciones de Analiticas). |
+| `AddUserAccountFields` | `User.UserName` (unico), `LastLoginAt`, `ConcurrencyStamp` + indices `Role`/`LastName`/`IsActive`. Incluye backfill de filas existentes (`UserName` desde el email, `ConcurrencyStamp` con `NEWID()`) antes de crear el indice unico. |
 
 ### Crear una nueva migracion
 

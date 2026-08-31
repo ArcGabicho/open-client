@@ -25,7 +25,8 @@
         <nav class="docs-jump" aria-label="Secciones">
             <a href="#empezar">Empezar</a>
             <a href="#despliegue">Despliegue</a>
-            <a href="#panel">El panel</a>
+            <a href="#panel">Los módulos</a>
+            <a href="#api">API</a>
             <a href="#recursos">Recursos</a>
         </nav>
     </section>
@@ -85,34 +86,79 @@
     </section>
 
     <section id="panel" class="docs-section">
-        <h2>El panel de clientes</h2>
+        <h2>Los módulos</h2>
         <p class="docs-section-lead">
-            Tras iniciar sesión, el panel (<code>/dashboard</code>) muestra toda la cartera de
-            clientes. Estas son sus capacidades.
+            Tras iniciar sesión, el panel (<code>/dashboard</code>) reúne cuatro módulos sobre
+            una misma base de datos.
         </p>
         <div class="docs-list">
             <div class="docs-list-row">
-                <span class="docs-list-name">Listado</span>
-                <span class="docs-list-desc">Paginado de 10 en 10 sobre miles de registros, resuelto en base de datos.</span>
+                <span class="docs-list-name">Clientes</span>
+                <span class="docs-list-desc">
+                    <code>/dashboard/clients</code> — listado paginado de 10 en 10 resuelto en base de
+                    datos, búsqueda de texto libre (razón social, RUC, contacto, correo), filtro por
+                    industria y orden, ficha completa y alta/edición/borrado lógico reversible.
+                </span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Búsqueda y filtros</span>
-                <span class="docs-list-desc">Texto libre (razón social, RUC, contacto, correo), filtro por industria y orden.</span>
+                <span class="docs-list-name">Integraciones</span>
+                <span class="docs-list-desc">
+                    <code>/dashboard/integrations</code> — describe la API REST de solo lectura y enlaza
+                    con su documento OpenAPI. Ver la sección <a href="#api">API</a>.
+                </span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Vistas</span>
-                <span class="docs-list-desc">Lista con filas desplegables o cuadrícula de tarjetas.</span>
+                <span class="docs-list-name">Analíticas</span>
+                <span class="docs-list-desc">
+                    <code>/dashboard/analytics</code> — totales y altas por período, distribución por
+                    industria, provincia, distrito y cargo, calidad de datos y evolución temporal, con
+                    selector de período y comparación contra el período anterior. Todo se agrega en SQL.
+                </span>
             </div>
             <div class="docs-list-row">
-                <span class="docs-list-name">Ficha</span>
-                <span class="docs-list-desc">Cada cliente muestra sus datos fiscales, de contacto y de ubicación.</span>
-            </div>
-            <div class="docs-list-row">
-                <span class="docs-list-name">Alta, edición y borrado</span>
-                <span class="docs-list-desc">Formulario con validación en servidor; el borrado es lógico y reversible.</span>
+                <span class="docs-list-name">Usuarios</span>
+                <span class="docs-list-desc">
+                    <code>/dashboard/users</code> — administración de las cuentas del panel: alta,
+                    edición, roles, activación/desactivación, cambio de contraseña y auditoría.
+                    Solo accesible para administradores; las protecciones impiden el auto-bloqueo y
+                    dejar el sistema sin administrador.
+                </span>
             </div>
         </div>
         <a href="/log-in" class="btn btn-primary docs-panel-cta">Entrar al panel</a>
+    </section>
+
+    <section id="api" class="docs-section">
+        <h2>API de integración</h2>
+        <p class="docs-section-lead">
+            Una API REST versionada y de <strong>solo lectura</strong> sobre la cartera de
+            clientes. Usa el mismo sistema de sesión que el panel: toda petición debe estar
+            autenticada y autorizada; si no lo está, responde <code>401</code> en JSON, sin
+            redirigir al login.
+        </p>
+        <div class="docs-list">
+            <div class="docs-list-row">
+                <span class="docs-list-name">GET /api/v1/clients</span>
+                <span class="docs-list-desc">Listado paginado (<code>page</code>, <code>pageSize</code>; máx. 100 por página).</span>
+            </div>
+            <div class="docs-list-row">
+                <span class="docs-list-name">GET /api/v1/clients/{id}</span>
+                <span class="docs-list-desc">Un cliente por identificador; <code>404</code> si no existe.</span>
+            </div>
+            <div class="docs-list-row">
+                <span class="docs-list-name">GET /api/v1/clients/search</span>
+                <span class="docs-list-desc">Búsqueda comercial combinable por industria, provincia, distrito, cargo, RUC y texto libre.</span>
+            </div>
+            <div class="docs-list-row">
+                <span class="docs-list-name">GET /openapi/v1.json</span>
+                <span class="docs-list-desc">Documento OpenAPI con parámetros, DTOs, respuestas y códigos de estado.</span>
+            </div>
+        </div>
+        <p class="docs-section-lead">
+            Las respuestas usan un DTO propio (nunca la entidad EF Core) y un formato de error
+            consistente <code>{ "error": { "code", "message" } }</code>. La API queda preparada
+            para añadir API Keys como mecanismo independiente para consumidores externos.
+        </p>
     </section>
 
     <section id="recursos" class="docs-section">

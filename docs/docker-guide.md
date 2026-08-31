@@ -126,7 +126,7 @@ Define tres servicios encadenados por dependencias.
 
 ---
 
-#### `openclient` -- App Blazor + API REST
+#### `openclient` -- App Blazor + APIs REST (/api/clients, /api/v1, /api/analytics, /api/users)
 
 | Propiedad      | Valor                                  |
 |----------------|----------------------------------------|
@@ -142,6 +142,12 @@ Define tres servicios encadenados por dependencias.
 | `ConnectionStrings__DefaultConnection` | Conecta a `sqlserver:1433` con el usuario `openclient_user` |
 | `ADMIN_EMAIL`                          | `${OPENCLIENT_ADMIN_EMAIL}`                              |
 | `ADMIN_PASSWORD`                       | `${OPENCLIENT_ADMIN_PASSWORD}`                           |
+
+**Opcionales** (todas con valor por defecto seguro; ver `app-overview.md`):
+`Contact__Smtp__Host` / `__Port` / `__User` / `__Password` / `__From` / `__UseSsl`
+(formulario de contacto → `contact@gabicho.dev`; sin `Host` el mensaje solo se
+registra en el log), `Analytics__CacheSeconds` (por defecto `0`),
+`Api__Cors__AllowedOrigins__0…` (vacio = sin CORS).
 
 **Dependencia:** arranca solo cuando `db-init` termino con exito.
 

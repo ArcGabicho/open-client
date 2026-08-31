@@ -49,29 +49,39 @@ del `.env` (`OPENCLIENT_ADMIN_EMAIL` / `OPENCLIENT_ADMIN_PASSWORD`).
 
 ```
 core/
+├── Api/                            # ApiV1 (constantes) + ApiErrorMiddleware
+├── Components/
+│   ├── Layout/                     # MainLayout, LoginLayout, DashboardLayout
+│   ├── WebComponents/              # Componentes compartidos del panel
+│   └── Pages/                      # Público + Login + Dashboard/Clients/Integrations/Analytics/Users
+├── Controllers/                    # ClientsController, ApiController (/api/v1), AnalyticsController,
+│                                   #   UsersController, AuthController
 ├── Data/
-│   ├── OpenClientDbContext.cs       # DbContext con DbSet<Client> y DbSet<User>
-│   ├── DbInitializer.cs             # Migraciones + admin + seed
-│   ├── DbSeeder.cs                  # Seed de clientes via EF Core
-│   ├── ClientConfiguration.cs       # Fluent API para Client
-│   ├── UserConfiguration.cs         # Fluent API para User
-│   ├── SeedData/
-│   │   └── ClientSeedData.cs        # ~4018 registros de clientes (C#)
-│   └── Migrations/                  # Migraciones EF Core
+│   ├── Context/                    # OpenClientDbContext + fábrica de diseño + DbHealthCheck
+│   ├── Configurations/             # ClientConfiguration, UserConfiguration
+│   ├── Repositories/               # IClientRepository, IUserRepository (+ impl.)
+│   ├── Seeds/                      # DbInitializer, DbSeeder
+│   ├── SeedData/                   # ClientSeedData.cs (~4018 registros, C#)
+│   └── Migrations/                 # Migraciones EF Core
+├── Extensions/                     # ServiceExtensions (composición de la DI)
+├── Interfaces/                     # IClientService, IAuthService, IApiClientService,
+│                                   #   IAnalyticsService, IUserService, IUserAuditLogger, IContactMailer…
 ├── Models/
-│   ├── Domain/
-│   │   ├── Client.cs
-│   │   └── User.cs
-│   └── DTO/
-│       └── LoginModel.cs
-├── Services/
-│   └── AuthService.cs               # BCrypt.Verify + claims
-├── Controllers/
-│   └── AuthController.cs            # POST /auth/log-in, GET /auth/log-out
-├── Components/                      # Blazor components
-├── Program.cs                       # Entrypoint + DbInitializer
+│   ├── Domain/                     # Client.cs, User.cs
+│   ├── DTO/                        # DTOs de todos los módulos (incl. tipos Api* y de Analíticas/Usuarios)
+│   └── Validators/                 # FluentValidation (clientes, usuarios, contraseña, contacto)
+├── Services/                       # ClientService, AuthService, ApiClientService, AnalyticsService,
+│                                   #   UserService, UserAuditLogger, SmtpContactMailer
+├── Program.cs                      # Serilog + ServiceExtensions + pipeline + DbInitializer
 └── openclient.csproj
+
+tests/
+└── OpenClient.Api.Tests/           # xUnit + WebApplicationFactory<Program> + SQLite en memoria
 ```
+
+> Convención de carpetas: `Controllers/`, `Services/`, `Interfaces/` se mantienen
+> **planas** (un archivo por directorio, sin subcarpetas por feature). El
+> `namespace` no tiene por qué reflejar la ruta física.
 
 ## 4. EF Core Migrations
 
@@ -110,16 +120,23 @@ La aplicacion ejecuta `Database.MigrateAsync()` al iniciar via `DbInitializer`.
 ## 6. Verificacion antes de commit
 
 ```bash
-dotnet build core/openclient.csproj
-./scripts/run.sh          # segunda ejecucion debe ser idempotente
+dotnet build OpenClient.slnx          # 0 warnings, 0 errores
+dotnet test                           # suite xUnit (API v1, analíticas, usuarios, contacto)
+./scripts/run.sh                      # segunda ejecucion debe ser idempotente
 ```
+
+> Migraciones: si tocas `Client`/`User` o sus `*Configuration`, genera la
+> migración con `dotnet ef migrations add … --project core/openclient.csproj
+> --output-dir Data/Migrations`. La herramienta `dotnet-ef` está fijada como
+> tool local (`.config/dotnet-tools.json`); restaura con `dotnet tool restore`.
 
 Checklist funcional minimo:
 
 - [ ] `/log-in` carga sin errores de consola (sin circuito Blazor)
 - [ ] login incorrecto muestra mensaje generico
-- [ ] login correcto llega a `/dashboard`
+- [ ] login correcto llega a `/dashboard`; el pie de la barra lateral muestra el nombre y rol reales
 - [ ] `/dashboard` anonimo redirige a `/log-in?ReturnUrl=%2Fdashboard`
-- [ ] logout lleva a `/log-in` sin errores de WebSocket
-- [ ] tras logout, `/dashboard` vuelve a exigir login
+- [ ] `/dashboard/users` con un usuario no administrador → 403 / "sin permisos"
+- [ ] `GET /api/v1/clients` sin sesión → 401 en JSON (no HTML); `/openapi/v1.json` responde
+- [ ] logout lleva a `/log-in` sin errores de WebSocket; tras logout, el panel vuelve a exigir login
 - [ ] segunda ejecucion de `run.sh`: 1 admin, ~4018 clientes, sin duplicados

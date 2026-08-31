@@ -4,7 +4,6 @@ using OpenClient.Models.Domain;
 
 namespace OpenClient.Data;
 
-/// <inheritdoc cref="IDbInitializer" />
 public sealed class DbInitializer : IDbInitializer
 {
     private readonly IDbContextFactory<OpenClientDbContext> _contextFactory;

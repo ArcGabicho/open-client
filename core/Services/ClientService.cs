@@ -6,7 +6,6 @@ using OpenClient.Models.DTO;
 
 namespace OpenClient.Services;
 
-/// <inheritdoc cref="IClientService" />
 public sealed class ClientService : IClientService
 {
     private readonly IClientRepository _repository;

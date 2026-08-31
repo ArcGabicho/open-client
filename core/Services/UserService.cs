@@ -9,7 +9,6 @@ using OpenClient.Models.DTO.Users;
 
 namespace OpenClient.Services;
 
-/// <inheritdoc cref="IUserService" />
 public sealed class UserService : IUserService
 {
     private const int BcryptWorkFactor = 12;

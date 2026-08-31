@@ -4,7 +4,6 @@ using OpenClient.Models.DTO.Users;
 
 namespace OpenClient.Data.Repositories;
 
-/// <inheritdoc cref="IUserRepository" />
 public sealed class UserRepository : IUserRepository
 {
     private readonly IDbContextFactory<OpenClientDbContext> _contextFactory;

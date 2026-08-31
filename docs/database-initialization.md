@@ -72,6 +72,9 @@ Responsabilidades:
 2. Crear/verificar administrador initial (`BCrypt + Users.Add`)
 3. Ejecutar seed de clientes (`DbSeeder`)
 
+El administrador inicial se crea con `Role = "Admin"`, `UserName` derivado del
+email (parte anterior a `@`) y un `ConcurrencyStamp` nuevo.
+
 El inicializador es idempotente:
 - Si la BD ya tiene migraciones aplicadas, no las duplica.
 - Si ya existe un administrador con ese email, no lo sobreescribe.

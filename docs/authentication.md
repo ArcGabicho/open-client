@@ -17,8 +17,9 @@ Login.razor (SSR estático, sin circuito)
 AuthController [HttpPost("log-in")]               <-- HTTP POST tradicional (PRG)
    |-- IAntiforgery.ValidateRequestAsync()        <-- valida token+cookie
    |-- AuthService.ValidateCredentialsAsync()     <-- busca usuario activo + BCrypt.Verify
-   |-- ClaimsIdentity + ClaimsPrincipal           <-- claims: Id, Name, Email, Role
+   |-- ClaimsIdentity + ClaimsPrincipal           <-- claims: Id, Name, Email, GivenName, Surname, Role
    |-- HttpContext.SignInAsync(Cookie)            <-- Set-Cookie .OpenClient.Auth
+   |-- AuthService.RecordSuccessfulLoginAsync()   <-- sella Users.LastLoginAt
    v
 302 -> /dashboard  (o returnUrl si es local)
 ```
@@ -80,7 +81,7 @@ texto libre del query string.
 
 ## 3. Flujo de logout
 
-1. `Dashboard.razor` renderiza un **enlace nativo**:
+1. `DashboardLayout.razor` renderiza un **enlace nativo**:
    `<a href="/auth/log-out" data-enhance-nav="false">Cerrar sesión</a>`.
    El click lo gestiona el navegador directamente: no hay `@onclick`, ni
    JS interop, ni ningún mensaje enviado por el WebSocket del circuito.
@@ -129,16 +130,51 @@ Configuradas en `Program.cs`:
 
 ## 5. Claims y autorización
 
-Claims emitidos: `ClaimTypes.NameIdentifier` (Id numérico), `ClaimTypes.Name`
-y `ClaimTypes.Email` (correo), `ClaimTypes.Role` (`Admin`).
+Claims emitidos por `AuthService.CreateClaims`: `ClaimTypes.NameIdentifier` (Id
+numérico), `ClaimTypes.Name` y `ClaimTypes.Email` (correo),
+`ClaimTypes.GivenName` / `ClaimTypes.Surname` (nombre y apellido, usados por
+`DashboardLayout` para el pie del panel) y `ClaimTypes.Role`.
 
-Las páginas protegidas usan `@attribute [Authorize]` (actualmente
-`Dashboard.razor`). Un anónimo que visita `/dashboard` recibe
-`302 → /log-in?ReturnUrl=%2Fdashboard` automáticamente por el middleware de
-cookies; tras loguearse, el `returnUrl` local lo devuelve a `/dashboard`.
+**Roles**: el sistema aprovisiona `Admin`. El módulo de Usuarios reconoce el
+conjunto cerrado `{Admin, Manager, User}` (`UserRoles.All`) y valida contra él
+toda asignación. `Program.cs` registra dos políticas:
+
+| Política | Requisito | Uso |
+|---|---|---|
+| `ApiV1.Read` | autenticado + rol en `{Admin, Integrations}` | endpoints `/api/v1/*` |
+| `Users.Admin` | autenticado + rol `Admin` | `UsersController` y la página `/dashboard/users` |
+
+Las páginas protegidas usan `@attribute [Authorize]` (enforced por el middleware
+de autorización en la navegación inicial del componente). Un anónimo que visita
+`/dashboard` recibe `302 → /log-in?ReturnUrl=%2Fdashboard`; tras loguearse, el
+`returnUrl` local lo devuelve.
 
 `AccessDeniedPath = "/access-denied"` está configurado y la página existe
 (`Pages/AccessDenied.razor`).
+
+### Peticiones a `/api/*`
+
+Los eventos de la cookie distinguen las rutas de API: bajo `/api` una petición
+no autenticada recibe **401** y una autenticada sin permiso **403**, en ambos
+casos sin redirigir al HTML de login (`OnRedirectToLogin` /
+`OnRedirectToAccessDenied`). Bajo `/api/v1`, `ApiErrorMiddleware` además rellena
+el cuerpo con `{ "error": { "code", "message" } }`.
+
+### Cuenta desactivada a mitad de sesión
+
+`AuthService.ValidateCredentialsAsync` ya rechaza el login de un usuario
+inactivo. Para expulsar a quien fue **desactivado o eliminado con la sesión
+abierta**, `OnValidatePrincipal` revalida contra la base de datos —como máximo
+una vez cada 3 minutos por circuito— que el usuario siga existiendo y activo; si
+no, `RejectPrincipal()` + `SignOutAsync()`.
+
+### Último acceso
+
+Tras un `SignInAsync` correcto, `AuthController` llama a
+`AuthService.RecordSuccessfulLoginAsync(userId)`, que sella `Users.LastLoginAt`
+con `ExecuteUpdateAsync` (sin cargar la entidad ni tocar el `ConcurrencyStamp`).
+Es la única fuente de verdad del "último acceso"; el módulo de Usuarios solo lo
+lee.
 
 ## 6. Antiforgery
 

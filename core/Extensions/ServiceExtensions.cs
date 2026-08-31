@@ -32,6 +32,7 @@ public static class ServiceExtensions
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IClientService, ClientService>();
         services.AddScoped<IDbInitializer, DbInitializer>();
+        services.AddScoped<IContactMailer, SmtpContactMailer>();
 
         // Validadores (FluentValidation)
         services.AddValidatorsFromAssemblyContaining<ClientEditModelValidator>();
@@ -39,12 +40,6 @@ public static class ServiceExtensions
         return services;
     }
 
-    /// <summary>
-    /// Módulo de API de integración (<c>/api/v1</c>): servicios propios, documento
-    /// OpenAPI y política CORS con nombre. Es independiente del CRUD administrativo
-    /// y reutiliza el <c>OpenClientDbContext</c>, las entidades EF Core y la
-    /// autenticación/autorización existentes.
-    /// </summary>
     public static IServiceCollection AddIntegrationApi(
         this IServiceCollection services,
         IConfiguration configuration)

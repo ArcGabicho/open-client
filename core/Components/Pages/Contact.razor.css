@@ -296,3 +296,58 @@
         gap: 0.65rem;
     }
 }
+
+/* ---------- Estados del formulario ---------- */
+
+.contact-alert {
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 1rem;
+    font-size: 0.86rem;
+    color: #a4310f;
+    background: #fdf1e3;
+    border: 1px solid #f2d3ad;
+    border-radius: var(--radius-sm, 10px);
+}
+
+.contact-errors {
+    margin: 0 0 1rem;
+    padding: 0.6rem 0.9rem 0.6rem 1.6rem;
+    font-size: 0.84rem;
+    color: #b42323;
+    background: #fdecec;
+    border: 1px solid #f2c9c7;
+    border-radius: var(--radius-sm, 10px);
+}
+
+.contact-done {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+}
+
+.contact-done-mark {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: #1f9d6b;
+    background: #e2f6ec;
+}
+
+.contact-done-mark svg {
+    width: 22px;
+    height: 22px;
+}
+
+.contact-done h2 {
+    margin: 0;
+    font-size: 1.15rem;
+}
+
+.contact-done p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--text-soft);
+}

@@ -25,10 +25,37 @@
         <h2>Qué es Open Client</h2>
         <p>
             Open Client es una aplicación web con tres partes: un sitio público, el inicio de
-            sesión y un panel de gestión comercial de clientes. Todo se despliega como una
+            sesión y un panel administrativo con cuatro módulos —Clientes, Integraciones,
+            Analíticas y Usuarios— sobre una misma base de datos. Todo se despliega como una
             imagen Docker, lista para Azure Container Apps o para tu propia máquina virtual, y
             los datos viven siempre en tu SQL Server.
         </p>
+    </section>
+
+    <section class="about-block">
+        <h2>Los módulos</h2>
+        <div class="principle-grid">
+            <article class="principle-card">
+                <span class="principle-index">01</span>
+                <h3>Clientes</h3>
+                <p>CRUD de la cartera comercial: listado paginado, búsqueda, filtros, orden, ficha completa y borrado lógico reversible.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">02</span>
+                <h3>Integraciones</h3>
+                <p>API REST versionada y de solo lectura sobre los clientes (<code>/api/v1</code>), autenticada con la sesión existente y descrita con OpenAPI.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">03</span>
+                <h3>Analíticas</h3>
+                <p>Métricas agregadas calculadas en SQL Server: altas por período, distribución por industria y geografía, cargos, calidad de datos y series temporales.</p>
+            </article>
+            <article class="principle-card">
+                <span class="principle-index">04</span>
+                <h3>Usuarios</h3>
+                <p>Administración de las cuentas del panel: alta, edición, roles, activación, cambio de contraseña y auditoría, con autorización por rol en el backend.</p>
+            </article>
+        </div>
     </section>
     <section class="about-block">
         <h2>Principios</h2>
@@ -61,9 +88,11 @@
             <li><span>Interfaz</span> Blazor Web App · SSR con interactividad de servidor por página</li>
             <li><span>Datos</span> Entity Framework Core 10 sobre SQL Server 2022, con borrado lógico</li>
             <li><span>Capas</span> Componente → servicio → repositorio → EF Core (ver <code>docs/architecture.md</code>)</li>
-            <li><span>Empaquetado</span> Imagen Docker multi-stage</li>
-            <li><span>Despliegue</span> Azure Container Apps o Azure VM mediante scripts</li>
-            <li><span>Acceso</span> Autenticación por sesión (cookie + BCrypt) para el panel</li>
+            <li><span>API</span> Controladores REST versionados (<code>/api/v1</code>) con documento OpenAPI</li>
+            <li><span>Analíticas</span> Agregaciones (<code>GROUP BY</code>, <code>COUNT</code>) ejecutadas en SQL Server, nunca en memoria</li>
+            <li><span>Acceso</span> Autenticación por sesión (cookie + BCrypt) y autorización por rol y política</li>
+            <li><span>Auditoría</span> Operaciones administrativas sobre usuarios registradas en el log estructurado</li>
+            <li><span>Empaquetado</span> Imagen Docker multi-stage para Azure Container Apps o Azure VM</li>
         </ul>
     </section>
     <section class="about-cta">

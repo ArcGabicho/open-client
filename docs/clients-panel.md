@@ -1,14 +1,17 @@
 # Panel de Clientes
 
-Cómo funciona `core/Components/Pages/Dashboard.razor`: la única vista tras el
-inicio de sesión y la razón de ser del panel. Recorre la cadena **componente
+Cómo funciona `core/Components/Pages/Clients.razor` (ruta `/dashboard/clients`):
+el módulo de gestión de la cartera comercial. Recorre la cadena **componente
 Blazor → servicio → repositorio → EF Core → SQL Server**, con alta, edición y
 borrado lógico reales, y está pensada para operar sobre la tabla de ~4018
 clientes sin cargarla en memoria.
 
-> El proyecto se limita a esto: el sitio público (`MainLayout` + Index / About /
-> Docs / Contact), el inicio de sesión y este panel. No hay más páginas de
-> aplicación.
+> Es uno de los cuatro módulos del panel `/dashboard`. Los otros son
+> **Integraciones** (`/dashboard/integrations` + API `/api/v1`, ver
+> `rest-api.md`), **Analíticas** (`/dashboard/analytics`) y **Usuarios**
+> (`/dashboard/users`). `/dashboard` (`Dashboard.razor`) es la portada del panel.
+> El sitio público (`MainLayout` + Index / About / Docs / Contact) y el inicio de
+> sesión completan la superficie visible.
 
 ---
 
@@ -16,8 +19,9 @@ clientes sin cargarla en memoria.
 
 | Aspecto | Valor |
 | --- | --- |
-| Ruta | `/dashboard` (`@page`) |
-| Layout | `DashboardLayout` (topbar mínima: marca + cerrar sesión + perfil) |
+| Componente | `core/Components/Pages/Clients.razor` |
+| Ruta | `/dashboard/clients` (`@page`) |
+| Layout | `DashboardLayout` (barra lateral con los cuatro módulos + perfil real del usuario autenticado + cerrar sesión) |
 | Autorización | `@attribute [Authorize]` — requiere sesión con cookie |
 | Render mode | `@rendermode InteractiveServer` (interactividad opt-in) |
 | Ciclo de vida | `@implements IDisposable` (libera el debounce de búsqueda) |
@@ -33,8 +37,8 @@ como `AddScoped<IClientService, ClientService>()`.
 ## 2. Arquitectura de datos
 
 ```
-Dashboard.razor ─► IClientService ─► IClientRepository ─► IDbContextFactory<OpenClientDbContext> ─► SQL Server
-    (UI)          (caso de uso)      (acceso a datos)      (un contexto por operación)
+Clients.razor ─► IClientService ─► IClientRepository ─► IDbContextFactory<OpenClientDbContext> ─► SQL Server
+   (UI)          (caso de uso)      (acceso a datos)      (un contexto por operación)
 
 ClientsController (api/clients) ─► IClientService   (misma capa; el panel Blazor NO pasa por HTTP)
 ```
@@ -216,7 +220,7 @@ La vista de cuadrícula reutiliza `OpenDetail` y `OpenDelete` en sus botones
 
 ---
 
-## 7. Estilos (`Dashboard.razor.css`, CSS aislado)
+## 7. Estilos (`Clients.razor.css`, CSS aislado)
 
 - Paleta y tokens sobre `.clients` (clase raíz), no en `:root` — ver la nota de
   aislamiento en `CONTRIBUTING.md`.

@@ -1,9 +1,3 @@
-/* ============================================================
-   Open Client — Login form
-   Palette tokens cascade in from .auth-shell (LoginLayout);
-   fallbacks keep the form correct if rendered standalone.
-   ============================================================ */
-
 .login-header {
     margin-bottom: 2rem;
 }

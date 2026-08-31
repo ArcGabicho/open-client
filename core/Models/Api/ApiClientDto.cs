@@ -1,10 +1,5 @@
 namespace OpenClient.Models.Api;
 
-/// <summary>
-/// Contrato público de un cliente expuesto por la API de integración (<c>/api/v1</c>).
-/// Es independiente de las entidades EF Core y de los DTOs del panel administrativo:
-/// cualquier cambio aquí es un cambio del contrato REST.
-/// </summary>
 public sealed class ApiClientDto
 {
     /// <summary>Identificador único del cliente.</summary>

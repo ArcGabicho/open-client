@@ -3,7 +3,6 @@ using OpenClient.Interfaces;
 
 namespace OpenClient.Services;
 
-/// <inheritdoc cref="IUserAuditLogger" />
 public sealed class UserAuditLogger : IUserAuditLogger
 {
     private readonly ILogger<UserAuditLogger> _logger;

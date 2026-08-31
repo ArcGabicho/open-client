@@ -1,11 +1,3 @@
-/* ============================================================
-   Open Client — Dashboard layout (sidebar lateral)
-   Blazor scoped CSS. El palette vive sobre .dashboard-shell porque
-   ":root" no sobrevive al reescribido de aislamiento. El .container
-   global añade 2.5rem 5rem de padding y html/body usan overflow:hidden,
-   así que el shell cancela ese marco y gestiona su propio scroll.
-   ============================================================ */
-
 .dashboard-shell {
     --bg: #ffffff;
     --bg-soft: #f5f6fa;
