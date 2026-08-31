@@ -10,6 +10,7 @@ Open Client es un proyecto que te brinda un servicio web, panel administrativo y
 <a href="#"><img src="https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver" alt="SQL Server"></a>
 <a href="#"><img src="https://img.shields.io/badge/Docker-Multi--stage-2496ED?logo=docker" alt="Docker"></a>
 <a href="#"><img src="https://img.shields.io/badge/Azure-Container_Apps-0089D6?logo=microsoftazure" alt="Azure"></a>
+<a href="https://github.com/ArcGabicho/open-client/actions/workflows/ci.yml"><img src="https://github.com/ArcGabicho/open-client/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
 ---
 
 #### Instalación Local: Usando los Scripts en Bash
