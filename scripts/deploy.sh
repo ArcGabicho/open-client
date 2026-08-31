@@ -8,6 +8,16 @@ NC='\033[0m'
 
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
+# Prefijo para comandos que requieren privilegios (vacio si ya somos root)
+if [ "$(id -u)" -eq 0 ]; then
+    SUDO=""
+elif command -v sudo &> /dev/null; then
+    SUDO="sudo"
+else
+    SUDO=""
+fi
+DOCKER_SUDO=""   # se rellena con "sudo" si el usuario aun no esta en el grupo docker
+
 REPO_URL="${OPENCLIENT_REPO_URL:-https://github.com/ArcGabicho/open-client.git}"
 DEPLOY_DIR="${OPENCLIENT_DEPLOY_DIR:-$HOME/open-client}"
 DEPLOY_BRANCH="${OPENCLIENT_BRANCH:-master}"
@@ -87,15 +97,76 @@ setup_env_interactive() {
 }
 
 # ----------------------------------------------------
+# Instalacion de dependencias (Ubuntu/Debian con apt)
+# ----------------------------------------------------
+apt_install() {
+    if ! command -v apt-get &> /dev/null; then
+        echo -e "${RED}Gestor de paquetes no soportado (se esperaba apt).${NC}"
+        echo -e "Instala manualmente: ${YELLOW}$*${NC}"
+        exit 1
+    fi
+    $SUDO apt-get update -y
+    $SUDO DEBIAN_FRONTEND=noninteractive apt-get install -y "$@"
+}
+
+ensure_dependencies_vm() {
+    echo -e "${YELLOW}[+] Verificando dependencias...${NC}"
+
+    # Utilidades basicas
+    local base_missing=()
+    for c in git curl ca-certificates; do
+        case "$c" in
+            ca-certificates) dpkg -s ca-certificates &> /dev/null || base_missing+=("$c") ;;
+            *) command -v "$c" &> /dev/null || base_missing+=("$c") ;;
+        esac
+    done
+    if [ ${#base_missing[@]} -gt 0 ]; then
+        echo -e "${YELLOW}[+] Instalando: ${base_missing[*]}${NC}"
+        apt_install "${base_missing[@]}"
+    fi
+
+    # Docker Engine
+    if ! command -v docker &> /dev/null; then
+        echo -e "${YELLOW}[+] Docker no encontrado. Instalando via get.docker.com...${NC}"
+        curl -fsSL https://get.docker.com | $SUDO sh
+    fi
+
+    # Plugin 'docker compose' (v2)
+    if ! docker compose version &> /dev/null; then
+        echo -e "${YELLOW}[+] Plugin 'docker compose' no encontrado. Instalando...${NC}"
+        apt_install docker-compose-plugin
+    fi
+
+    # Arrancar y habilitar el servicio
+    if command -v systemctl &> /dev/null; then
+        $SUDO systemctl enable --now docker &> /dev/null || true
+    fi
+
+    # Permisos: si el usuario no puede hablar con el daemon, usar sudo para docker
+    if ! docker info &> /dev/null; then
+        if $SUDO docker info &> /dev/null; then
+            DOCKER_SUDO="$SUDO"
+            echo -e "${YELLOW}[i] Se usara 'sudo' para Docker (el usuario no esta en el grupo 'docker').${NC}"
+            echo -e "    Para evitarlo en el futuro: ${YELLOW}sudo usermod -aG docker $USER${NC} y reinicia sesion."
+        else
+            echo -e "${RED}Error: Docker esta instalado pero el daemon no responde.${NC}"
+            exit 1
+        fi
+    fi
+
+    # Reconstruir el comando compose con el prefijo adecuado
+    COMPOSE="${DOCKER_SUDO:+$DOCKER_SUDO }docker compose --env-file .env -f docker/docker-compose.yml"
+
+    echo -e "${GREEN}[✓] Dependencias listas.${NC}"
+}
+
+# ----------------------------------------------------
 # Modo 1: Despliegue en Maquina Virtual / Servidor Ubuntu
 # ----------------------------------------------------
 deploy_vm() {
     echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
 
-    if ! command -v git &> /dev/null; then
-        echo -e "${RED}Error: 'git' no esta instalado.${NC}"
-        exit 1
-    fi
+    ensure_dependencies_vm
 
     if [ -d .git ]; then
         # Ya estamos dentro de un clon del repo
