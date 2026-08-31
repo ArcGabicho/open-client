@@ -78,6 +78,7 @@ lo crea el script, no la plantilla.
 
 - **Azure CLI** (`az`) 2.53 o superior.
 - Extension Bicep: `az bicep install` (Azure CLI la instala sola la primera vez).
+- **git** (el script clona el repo si se ejecuta fuera de un clon).
 - Una **suscripcion de Azure** y permisos para crear grupos de recursos y
   asignaciones de rol (rol `Owner` o `Contributor` + `User Access Administrator`
   sobre la suscripcion o un grupo de recursos ya existente).
@@ -93,10 +94,17 @@ az account set --subscription "<ID o nombre de la suscripcion>"
 
 ## 3. Uso rapido
 
-Desde la raiz del repositorio:
+Desde un clon del repositorio:
 
 ```bash
 ./infra/deploy.sh
+```
+
+O directamente desde GitHub (el script clona/actualiza el repo en
+`$HOME/open-client` antes de continuar):
+
+```bash
+curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/infra/deploy.sh | bash
 ```
 
 El script pide de forma interactiva (con confirmacion doble) dos contrasenas:

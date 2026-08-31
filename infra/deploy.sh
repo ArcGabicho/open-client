@@ -6,8 +6,37 @@ YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+# ---- Localizacion del repo (permite ejecucion via 'curl | bash') ----
+# El script necesita la plantilla Bicep y el codigo fuente (para 'az acr build').
+# Si se ejecuta desde un clon del repo, se usa tal cual; si se ejecuta por tuberia
+# (no hay fichero en BASH_SOURCE) se clona/actualiza en $OPENCLIENT_DEPLOY_DIR.
+REPO_URL="${OPENCLIENT_REPO_URL:-https://github.com/ArcGabicho/open-client.git}"
+DEPLOY_DIR="${OPENCLIENT_DEPLOY_DIR:-$HOME/open-client}"
+DEPLOY_BRANCH="${OPENCLIENT_BRANCH:-master}"
+
+SOURCE="${BASH_SOURCE[0]:-}"
+if [ -n "$SOURCE" ] && [ -f "$SOURCE" ]; then
+    REPO_ROOT="$(cd "$(dirname "$SOURCE")/.." && pwd)"
+else
+    REPO_ROOT=""
+fi
+
+if [ -z "$REPO_ROOT" ] || [ ! -f "$REPO_ROOT/infra/main.bicep" ]; then
+    command -v git &> /dev/null || { echo -e "${RED}Error: 'git' no esta instalado.${NC}"; exit 1; }
+    if [ ! -d "$DEPLOY_DIR/.git" ]; then
+        echo -e "${YELLOW}[+] Clonando ${REPO_URL} en ${DEPLOY_DIR}...${NC}"
+        git clone --branch "$DEPLOY_BRANCH" "$REPO_URL" "$DEPLOY_DIR"
+    else
+        echo -e "${YELLOW}[+] Actualizando el repo en ${DEPLOY_DIR}...${NC}"
+        git -C "$DEPLOY_DIR" fetch origin "$DEPLOY_BRANCH"
+        git -C "$DEPLOY_DIR" checkout "$DEPLOY_BRANCH"
+        git -C "$DEPLOY_DIR" pull --ff-only origin "$DEPLOY_BRANCH"
+    fi
+    REPO_ROOT="$DEPLOY_DIR"
+fi
+
+SCRIPT_DIR="$REPO_ROOT/infra"
+cd "$REPO_ROOT"
 
 # ---- Configuracion (todo overrideable por variable de entorno) ----
 LOCATION="${AZURE_LOCATION:-eastus}"
