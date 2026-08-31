@@ -10,7 +10,7 @@ REPO_URL="https://github.com/ArcGabicho/open-client.git"
 TARGET_DIR="$HOME/open-client"
 BRANCH="master"
 
-echo -e "${GREEN}=== Instalacion automatica One-Liner de open-client ===${NC}"
+echo -e "${GREEN}=== Preparacion del entorno de desarrollo de open-client ===${NC}"
 
 echo -e "${YELLOW}[+] Verificando utilidades del sistema (git, curl, docker)...${NC}"
 
@@ -67,26 +67,25 @@ if [ "$(pwd)" != "$TARGET_DIR" ]; then
 fi
 
 if [ ! -f .env ]; then
-    echo -e "${YELLOW}[+] Generando credenciales seguras para Produccion...${NC}"
-    PROD_PASS="ProdPass_$(openssl rand -hex 12)!"
-    PROD_APP_PASS="AppPass_$(openssl rand -hex 12)!"
-    PROD_ADMIN_PASS="AdminPass_$(openssl rand -hex 12)!"
+    echo -e "${YELLOW}[+] Generando credenciales locales para el entorno de desarrollo...${NC}"
+    DEV_PASS="DevPass_$(openssl rand -hex 12)!"
+    DEV_APP_PASS="AppPass_$(openssl rand -hex 12)!"
+    DEV_ADMIN_PASS="AdminPass_$(openssl rand -hex 12)!"
 
     cat <<EOF > .env
-MSSQL_PASSWORD=${PROD_PASS}
-MSSQL_APP_PASSWORD=${PROD_APP_PASS}
+MSSQL_PASSWORD=${DEV_PASS}
+MSSQL_APP_PASSWORD=${DEV_APP_PASS}
 OPENCLIENT_ADMIN_EMAIL=admin@openclient.local
-OPENCLIENT_ADMIN_PASSWORD=${PROD_ADMIN_PASS}
+OPENCLIENT_ADMIN_PASSWORD=${DEV_ADMIN_PASS}
 EOF
-    echo -e "${GREEN}[✓] Contrasenas de produccion (SA, usuario de app y admin) generadas en .env de forma segura.${NC}"
+    echo -e "${GREEN}[✓] Credenciales locales (SA, usuario de app y admin) generadas en .env.${NC}"
 fi
 
 chmod +x scripts/*.sh
-echo -e "${YELLOW}[+] Desplegando stack con Docker Compose...${NC}"
-./scripts/deploy.sh
 
 echo -e "${GREEN}=======================================================${NC}"
-echo -e "${GREEN}¡open-client ha sido desplegado exitosamente!${NC}"
+echo -e "${GREEN}Entorno de desarrollo de open-client listo.${NC}"
 echo -e "Directorio: ${YELLOW}$TARGET_DIR${NC}"
-echo -e "Recuerda respaldar la contrasena generada en tu archivo ${YELLOW}.env${NC}"
+echo -e "Para levantar el entorno: ${YELLOW}./scripts/run.sh${NC}"
+echo -e "Recuerda respaldar las contrasenas generadas en tu archivo ${YELLOW}.env${NC}"
 echo -e "${GREEN}=======================================================${NC}"
