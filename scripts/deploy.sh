@@ -23,7 +23,7 @@ deploy_vm() {
     echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
 
     echo -e "${YELLOW}[+] Descargando codigo actualizado de Git...${NC}"
-    git pull origin develop
+    git pull origin master
 
     if [ ! -f .env ]; then
         echo -e "${RED}Error: No existe el archivo .env en el servidor.${NC}"
@@ -98,10 +98,17 @@ deploy_aca() {
 MODE="$1"
 
 if [ -z "$MODE" ]; then
+    if [ ! -t 0 ] && [ ! -r /dev/tty ]; then
+        echo -e "${RED}Error: No hay terminal interactiva disponible.${NC}"
+        echo -e "Ejecuta el script indicando el modo, por ejemplo:"
+        echo -e "  ${YELLOW}curl -sSL <URL> | bash -s -- --vm${NC}"
+        echo -e "  ${YELLOW}curl -sSL <URL> | bash -s -- --aca${NC}"
+        exit 1
+    fi
     echo -e "${YELLOW}Selecciona el entorno de despliegue:${NC}"
     echo "1) Maquina Virtual / Ubuntu (Docker Compose)"
     echo "2) Azure Container Apps (Nube Azure)"
-    read -p "Opcion [1-2]: " choice
+    read -p "Opcion [1-2]: " choice < /dev/tty
     case "$choice" in
         1) MODE="--vm" ;;
         2) MODE="--aca" ;;
