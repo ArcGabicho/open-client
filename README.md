@@ -10,7 +10,7 @@ Open Client es un proyecto que te brinda un servicio web, panel administrativo y
 <a href="#"><img src="https://img.shields.io/badge/SQL_Server-2022-CC292B?logo=microsoftsqlserver" alt="SQL Server"></a>
 <a href="#"><img src="https://img.shields.io/badge/Docker-Multi--stage-2496ED?logo=docker" alt="Docker"></a>
 <a href="#"><img src="https://img.shields.io/badge/Azure-Container_Apps-0089D6?logo=microsoftazure" alt="Azure"></a>
-<a href="https://github.com/ArcGabicho/open-client/actions/workflows/ci.yml"><img src="https://github.com/ArcGabicho/open-client/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+
 ---
 
 #### Instalación Local: Usando los Scripts en Bash
@@ -39,6 +39,7 @@ curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/script
 
 > [!WARNING]
 > **Requisitos de RAM en máquina virtual.** El despliegue en VM levanta SQL Server 2022 en contenedor, que **exige al menos 2000 MB de RAM física** para arrancar (el swap no cuenta). Con el build de .NET y el sistema operativo, **la VM debe tener como mínimo 4 GB de RAM**. `deploy.sh` comprueba la memoria disponible y aborta con un mensaje si no llega; puedes saltarte la comprobación con `OPENCLIENT_MIN_RAM_MB=0`, pero el contenedor de base de datos fallará igualmente. Si no puedes ampliar la RAM, usa una base de datos externa y levanta solo el servicio `openclient`, o despliega en Azure con la plantilla de `infra/` (ver la [guía de infraestructura](docs/infra-guide.md)).
+
 ---
 
 Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor.
