@@ -187,12 +187,36 @@ ensure_dependencies_vm() {
 }
 
 # ----------------------------------------------------
+# Comprobacion de memoria: SQL Server exige >= 2000 MB de RAM fisica
+# (el swap NO cuenta para su chequeo de arranque).
+# ----------------------------------------------------
+check_memory_vm() {
+    local min_mb="${OPENCLIENT_MIN_RAM_MB:-2000}"
+    local mem_kb mem_mb
+    mem_kb="$(awk '/^MemTotal:/ {print $2}' /proc/meminfo 2>/dev/null || echo 0)"
+    mem_mb=$(( mem_kb / 1024 ))
+
+    if [ "$mem_mb" -lt "$min_mb" ]; then
+        echo -e "${RED}Error: RAM insuficiente. Detectados ${mem_mb} MB; SQL Server necesita >= ${min_mb} MB.${NC}"
+        echo -e "El contenedor 'sqlserver' abortara con: 'requires a machine with at least 2000 megabytes of memory'."
+        echo -e "Opciones:"
+        echo -e "  - Ampliar la RAM de la VM (recomendado 4 GB)."
+        echo -e "  - Usar una base de datos externa y levantar solo el servicio 'openclient'."
+        echo -e "  - Desplegar en Azure Container Apps: ${YELLOW}... | bash -s -- --aca${NC}"
+        echo -e "Para omitir esta comprobacion: ${YELLOW}OPENCLIENT_MIN_RAM_MB=0${NC}"
+        exit 1
+    fi
+    echo -e "${GREEN}[✓] RAM disponible: ${mem_mb} MB.${NC}"
+}
+
+# ----------------------------------------------------
 # Modo 1: Despliegue en Maquina Virtual / Servidor Ubuntu
 # ----------------------------------------------------
 deploy_vm() {
     echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
 
     ensure_dependencies_vm
+    check_memory_vm
 
     if [ -d .git ]; then
         # Ya estamos dentro de un clon del repo

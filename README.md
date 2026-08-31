@@ -24,6 +24,9 @@ curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/script
 curl -sSL https://raw.githubusercontent.com/ArcGabicho/open-client/master/scripts/deploy.sh | bash
 ```
 
+> [!WARNING]
+> **Requisitos de RAM en máquina virtual.** El despliegue en VM levanta SQL Server 2022 en contenedor, que **exige al menos 2000 MB de RAM física** para arrancar (el swap no cuenta). Con el build de .NET y el sistema operativo, **la VM debe tener como mínimo 4 GB de RAM**. `deploy.sh` comprueba la memoria disponible y aborta con un mensaje si no llega; puedes saltarte la comprobación con `OPENCLIENT_MIN_RAM_MB=0`, pero el contenedor de base de datos fallará igualmente. Si no puedes ampliar la RAM, usa una base de datos externa y levanta solo el servicio `openclient`, o despliega en Azure Container Apps con `... | bash -s -- --aca`.
+
 ---
 
 Navega a http://openclient.azure.app para acceder al demo de Open Client con un panel de Blazor.
