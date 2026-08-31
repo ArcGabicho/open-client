@@ -8,6 +8,10 @@ NC='\033[0m'
 
 COMPOSE="docker compose --env-file .env -f docker/docker-compose.yml"
 
+REPO_URL="${OPENCLIENT_REPO_URL:-https://github.com/ArcGabicho/open-client.git}"
+DEPLOY_DIR="${OPENCLIENT_DEPLOY_DIR:-$HOME/open-client}"
+DEPLOY_BRANCH="${OPENCLIENT_BRANCH:-master}"
+
 show_help() {
     echo -e "Uso: ./scripts/deploy.sh [OPCION]"
     echo -e "Opciones:"
@@ -17,17 +21,99 @@ show_help() {
 }
 
 # ----------------------------------------------------
+# Generacion interactiva de .env a partir de .env.example
+# ----------------------------------------------------
+setup_env_interactive() {
+    if [ ! -f .env.example ]; then
+        echo -e "${RED}Error: No existe .env.example en $(pwd); no puedo generar .env.${NC}"
+        exit 1
+    fi
+
+    if [ ! -t 0 ] && [ ! -r /dev/tty ]; then
+        echo -e "${RED}Error: No hay terminal interactiva para pedir credenciales.${NC}"
+        echo -e "Crea manualmente el archivo: ${YELLOW}$(pwd)/.env${NC} (copia de .env.example)."
+        exit 1
+    fi
+
+    echo -e "${YELLOW}[+] No existe .env. Se creara a partir de .env.example.${NC}"
+    echo -e "    Para valores no sensibles, pulsa Enter para aceptar el valor entre [corchetes]."
+
+    local tmp
+    tmp="$(mktemp)"
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        # Conservar comentarios y lineas sin 'clave=valor'
+        if [ -z "$line" ] || [ "${line#\#}" != "$line" ] || [ "${line#*=}" = "$line" ]; then
+            printf '%s\n' "$line" >> "$tmp"
+            continue
+        fi
+
+        local key default current value value2
+        key="${line%%=*}"
+        default="${line#*=}"
+        current="${!key:-$default}"   # respeta variable ya exportada en el entorno
+
+        case "$key" in
+            *PASSWORD*|*SECRET*|*TOKEN*)
+                while true; do
+                    if ! read -r -s -p "Introduce $key: " value < /dev/tty; then
+                        echo
+                        echo -e "${RED}Entrada cancelada. No se creo .env.${NC}"
+                        rm -f "$tmp"
+                        exit 1
+                    fi
+                    echo
+                    if [ -z "${value:-}" ]; then
+                        if [ -n "${!key:-}" ]; then value="${!key}"; break; fi
+                        echo -e "${RED}  No puede estar vacio.${NC}"; continue
+                    fi
+                    read -r -s -p "Repite $key:   " value2 < /dev/tty; echo
+                    [ "$value" = "$value2" ] && break
+                    echo -e "${RED}  No coinciden, intenta de nuevo.${NC}"
+                done
+                ;;
+            *)
+                read -r -p "$key [$current]: " value < /dev/tty
+                value="${value:-$current}"
+                ;;
+        esac
+
+        printf '%s=%s\n' "$key" "$value" >> "$tmp"
+    done < .env.example
+
+    mv "$tmp" .env
+    chmod 600 .env
+    echo -e "${GREEN}[✓] Archivo .env creado en $(pwd)/.env${NC}"
+}
+
+# ----------------------------------------------------
 # Modo 1: Despliegue en Maquina Virtual / Servidor Ubuntu
 # ----------------------------------------------------
 deploy_vm() {
     echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
 
-    echo -e "${YELLOW}[+] Descargando codigo actualizado de Git...${NC}"
-    git pull origin master
+    if ! command -v git &> /dev/null; then
+        echo -e "${RED}Error: 'git' no esta instalado.${NC}"
+        exit 1
+    fi
+
+    if [ -d .git ]; then
+        # Ya estamos dentro de un clon del repo
+        echo -e "${YELLOW}[+] Descargando codigo actualizado de Git...${NC}"
+        git pull origin "$DEPLOY_BRANCH"
+    else
+        # Ejecucion fuera del repo (ej. curl | bash): clonar/actualizar en $DEPLOY_DIR
+        if [ ! -d "$DEPLOY_DIR/.git" ]; then
+            echo -e "${YELLOW}[+] Clonando repositorio en ${DEPLOY_DIR}...${NC}"
+            git clone --branch "$DEPLOY_BRANCH" "$REPO_URL" "$DEPLOY_DIR"
+        fi
+        cd "$DEPLOY_DIR"
+        echo -e "${YELLOW}[+] Descargando codigo actualizado de Git...${NC}"
+        git pull origin "$DEPLOY_BRANCH"
+    fi
 
     if [ ! -f .env ]; then
-        echo -e "${RED}Error: No existe el archivo .env en el servidor.${NC}"
-        exit 1
+        setup_env_interactive
     fi
 
     if ! grep -q "MSSQL_APP_PASSWORD=" .env || ! grep -q "MSSQL_PASSWORD=" .env; then
