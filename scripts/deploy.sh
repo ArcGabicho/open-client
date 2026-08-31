@@ -31,6 +31,22 @@ show_help() {
 }
 
 # ----------------------------------------------------
+# Politica de contrasena (compatible con SQL Server):
+# minimo 8 caracteres y al menos 3 de estos 4 grupos:
+# mayusculas, minusculas, digitos, simbolos.
+# ----------------------------------------------------
+password_policy_ok() {
+    local p="$1" classes=0
+    [ "${#p}" -ge 8 ] || return 1
+    [ "${#p}" -le 128 ] || return 1
+    [[ "$p" == *[A-Z]* ]] && classes=$((classes + 1))
+    [[ "$p" == *[a-z]* ]] && classes=$((classes + 1))
+    [[ "$p" == *[0-9]* ]] && classes=$((classes + 1))
+    [[ "$p" == *[^A-Za-z0-9]* ]] && classes=$((classes + 1))
+    [ "$classes" -ge 3 ]
+}
+
+# ----------------------------------------------------
 # Generacion interactiva de .env a partir de .env.example
 # ----------------------------------------------------
 setup_env_interactive() {
@@ -78,8 +94,18 @@ setup_env_interactive() {
                         echo -e "${RED}  No puede estar vacio.${NC}"; continue
                     fi
                     read -r -s -p "Repite $key:   " value2 < /dev/tty; echo
-                    [ "$value" = "$value2" ] && break
-                    echo -e "${RED}  No coinciden, intenta de nuevo.${NC}"
+                    if [ "$value" != "$value2" ]; then
+                        echo -e "${RED}  No coinciden, intenta de nuevo.${NC}"; continue
+                    fi
+                    case "$key" in
+                        *PASSWORD*)
+                            if ! password_policy_ok "$value"; then
+                                echo -e "${RED}  Contrasena debil: min 8 caracteres y 3 de 4 grupos (MAYUS, minus, digito, simbolo).${NC}"
+                                continue
+                            fi
+                            ;;
+                    esac
+                    break
                 done
                 ;;
             *)
