@@ -14,9 +14,10 @@ Esto garantiza que Docker Compose lea el archivo `.env` desde la raiz del proyec
 
 ---
 
-## 1. `scripts/setup.sh` -- Instalacion automatica (One-Liner)
+## 1. `scripts/setup.sh` -- Preparacion del entorno de desarrollo (One-Liner)
 
-Script de instalacion completo que configura el proyecto desde cero. Disenado para ejecutarse directamente desde GitHub con `curl`.
+Deja lista una maquina para trabajar en el proyecto. Disenado para ejecutarse
+directamente desde GitHub con `curl`. **No** despliega ni arranca nada.
 
 ### Que hace
 
@@ -24,7 +25,7 @@ Script de instalacion completo que configura el proyecto desde cero. Disenado pa
 2. Annade el usuario al grupo `docker` si no esta en el.
 3. Clona o actualiza el repositorio en `$HOME/open-client` (rama `master`).
 4. Genera un archivo `.env` con credenciales aleatorias seguras si no existe.
-5. Ejecuta `deploy.sh` para levantar el stack completo con Docker Compose.
+5. Da permisos de ejecucion a `scripts/*.sh` e indica el siguiente paso (`./scripts/run.sh`).
 
 ### Uso
 
@@ -100,9 +101,15 @@ La aplicacion ejecuta `DbInitializer` al iniciar, que:
 
 ---
 
-## 4. `scripts/deploy.sh` -- Despliegue a produccion
+## 4. `scripts/deploy.sh` -- Despliegue en maquina virtual
 
-Script de despliegue que soporta dos destinos: una maquina virtual (VM) con Docker o Azure Container Apps (ACA).
+Despliega open-client en una VM/servidor Linux con Docker Compose: verifica
+dependencias, comprueba la RAM minima para SQL Server, actualiza el codigo, valida
+`.env`, construye la imagen y levanta el stack (`sqlserver` + `db-init` +
+`openclient`).
+
+Para desplegar en **Azure** (Container Apps + Azure SQL) se usa la plantilla Bicep
+de `infra/`; ver [infra-guide.md](infra-guide.md).
 
 ### Uso
 
@@ -114,9 +121,9 @@ Script de despliegue que soporta dos destinos: una maquina virtual (VM) con Dock
 
 | Opcion    | Descripcion |
 |-----------|-------------|
-| `--vm`    | Despliega en una VM/Servidor Linux usando Docker Compose |
-| `--aca`   | Despliega en Azure Container Apps (nube) |
-| `--help`  | Muestra el mensaje de ayuda |
+| (ninguna) | Equivale a `--vm`. |
+| `--vm`    | Despliega en una VM/Servidor Linux usando Docker Compose. |
+| `--help`  | Muestra el mensaje de ayuda. |
 
 ---
 
@@ -142,6 +149,6 @@ Desarrollo diario:    run.sh
 Stack completo:       run.sh --full
 Ver logs:             run.sh --logs
 Desplegar a VM:       deploy.sh --vm
-Desplegar a Azure:    deploy.sh --aca
+Desplegar a Azure:    infra/deploy.sh   (ver docs/infra-guide.md)
 Limpiar todo:         clear.sh
 ```

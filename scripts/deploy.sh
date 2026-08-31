@@ -24,9 +24,13 @@ DEPLOY_BRANCH="${OPENCLIENT_BRANCH:-master}"
 
 show_help() {
     echo -e "Uso: ./scripts/deploy.sh [OPCION]"
+    echo -e ""
+    echo -e "Despliega open-client en una maquina virtual / servidor Linux con Docker Compose."
+    echo -e "Para desplegar en Azure (Container Apps + Azure SQL) usa la plantilla Bicep de"
+    echo -e "'infra/'; consulta docs/infra-guide.md."
+    echo -e ""
     echo -e "Opciones:"
-    echo -e "  --vm          Despliegue local/remoto en maquina virtual con Docker Compose (Por defecto)"
-    echo -e "  --aca         Despliegue en la nube usando Azure Container Apps"
+    echo -e "  --vm          Despliegue en maquina virtual con Docker Compose (comportamiento por defecto)"
     echo -e "  --help        Muestra este mensaje de ayuda"
 }
 
@@ -202,7 +206,7 @@ check_memory_vm() {
         echo -e "Opciones:"
         echo -e "  - Ampliar la RAM de la VM (recomendado 4 GB)."
         echo -e "  - Usar una base de datos externa y levantar solo el servicio 'openclient'."
-        echo -e "  - Desplegar en Azure Container Apps: ${YELLOW}... | bash -s -- --aca${NC}"
+        echo -e "  - Desplegar en Azure (Container Apps + Azure SQL) con la plantilla Bicep de 'infra/' (ver docs/infra-guide.md)."
         echo -e "Para omitir esta comprobacion: ${YELLOW}OPENCLIENT_MIN_RAM_MB=0${NC}"
         exit 1
     fi
@@ -210,7 +214,7 @@ check_memory_vm() {
 }
 
 # ----------------------------------------------------
-# Modo 1: Despliegue en Maquina Virtual / Servidor Ubuntu
+# Despliegue en Maquina Virtual / Servidor Linux
 # ----------------------------------------------------
 deploy_vm() {
     echo -e "${GREEN}=== Desplegando en Maquina Virtual / Servidor Linux ===${NC}"
@@ -267,70 +271,17 @@ deploy_vm() {
 }
 
 # ----------------------------------------------------
-# Modo 2: Despliegue en Azure Container Apps (ACA)
+# Flujo Principal
 # ----------------------------------------------------
-deploy_aca() {
-    echo -e "${GREEN}=== Desplegando en Azure Container Apps ===${NC}"
-
-    if ! command -v az &> /dev/null; then
-        echo -e "${RED}Error: Azure CLI ('az') no esta instalado.${NC}"
-        exit 1
-    fi
-
-    RESOURCE_GROUP="${AZURE_RESOURCE_GROUP:-rg-openclient}"
-    CONTAINER_APP_NAME="${AZURE_APP_NAME:-app-openclient}"
-    REGISTRY_NAME="${AZURE_REGISTRY_NAME:-acropenclient}"
-
-    echo -e "${YELLOW}[+] Comprobando sesion activa en Azure...${NC}"
-    az account show > /dev/null 2>&1 || az login
-
-    echo -e "${YELLOW}[+] Compilando y subiendo imagen a Azure Container Registry (ACR)...${NC}"
-    az acr build \
-        --registry "$REGISTRY_NAME" \
-        --image openclient-app:latest \
-        --file docker/Dockerfile .
-
-    echo -e "${YELLOW}[+] Actualizando Container App con la nueva imagen...${NC}"
-    az containerapp update \
-        --name "$CONTAINER_APP_NAME" \
-        --resource-group "$RESOURCE_GROUP" \
-        --image "${REGISTRY_NAME}.azurecr.io/openclient-app:latest"
-
-    echo -e "${GREEN}[✓] DESPLIEGUE EN AZURE CONTAINER APPS COMPLETADO EXITOSAMENTE.${NC}"
-}
-
-# ----------------------------------------------------
-# Flujo Principal y Seleccion
-# ----------------------------------------------------
-MODE="$1"
-
-if [ -z "$MODE" ]; then
-    if [ ! -t 0 ] && [ ! -r /dev/tty ]; then
-        echo -e "${RED}Error: No hay terminal interactiva disponible.${NC}"
-        echo -e "Ejecuta el script indicando el modo, por ejemplo:"
-        echo -e "  ${YELLOW}curl -sSL <URL> | bash -s -- --vm${NC}"
-        echo -e "  ${YELLOW}curl -sSL <URL> | bash -s -- --aca${NC}"
-        exit 1
-    fi
-    echo -e "${YELLOW}Selecciona el entorno de despliegue:${NC}"
-    echo "1) Maquina Virtual / Ubuntu (Docker Compose)"
-    echo "2) Azure Container Apps (Nube Azure)"
-    read -p "Opcion [1-2]: " choice < /dev/tty
-    case "$choice" in
-        1) MODE="--vm" ;;
-        2) MODE="--aca" ;;
-        *) echo -e "${RED}Opcion no valida.${NC}"; exit 1 ;;
-    esac
-fi
+# Unico destino soportado por este script: maquina virtual con Docker Compose.
+# El despliegue en Azure vive en 'infra/' (Bicep); ver docs/infra-guide.md.
+MODE="${1:---vm}"
 
 case "$MODE" in
     --vm)
         deploy_vm
         ;;
-    --aca)
-        deploy_aca
-        ;;
-    --help)
+    --help|-h)
         show_help
         ;;
     *)

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "namePrefix": {
+      "value": "openclient"
+    },
+    "sqlAdminLogin": {
+      "value": "openclientadmin"
+    },
+    "sqlAdminPassword": {
+      "value": ""
+    },
+    "appAdminEmail": {
+      "value": "admin@openclient.local"
+    },
+    "appAdminPassword": {
+      "value": ""
+    },
+    "deployApp": {
+      "value": true
+    },
+    "containerImage": {
+      "value": "REEMPLAZAR-POR-<acr>.azurecr.io/openclient-app:latest"
+    },
+    "containerCpu": {
+      "value": "0.5"
+    },
+    "containerMemory": {
+      "value": "1.0Gi"
+    },
+    "databaseName": {
+      "value": "OpenClientDb"
+    },
+    "databaseSkuName": {
+      "value": "Basic"
+    },
+    "databaseSkuTier": {
+      "value": "Basic"
+    }
+  }
+}

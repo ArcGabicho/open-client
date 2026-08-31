@@ -75,3 +75,6 @@ Thumbs.db
 *~
 .docker/
 .config
+
+## --- Bicep (salida compilada) ---
+infra/main.json
